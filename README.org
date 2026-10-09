@@ -1,27 +1,26 @@
 #+TITLE: workbench
 #+STARTUP: content indent
 
-* workbench
+This repo contains all the dotfiles. Files are contained within code
+blocks inside each ~*.org~ file. They and can be put in place by
+running ~make tangle~ or ~./make.awk t~. Running ~make~ or
+~./make.awk~ with no args displays the help.
 
-This repo contains all the dotfiles. Files are contained in ~*.org~ files and
-can be put in place by running ~make tangle~. Running ~make~ with no target
-displays the help.
-
-** ~make tangleawk~
+* ~make tangleawk~
 
 This will run the ~tangle.awk~ script which attempts to emulate emacs
 ~org-babel-tangle-file~ but without emacs installed.
 
-- It will copy each source block in a given ~*.org~ file into it's respective
-  ~:tangle~ destination and create any parent directories.
+- It will copy each source block in a given ~*.org~ file into it's
+  respective ~:tangle~ destination and create any parent directories.
 - Some conditional checks are supported for :tangle and :eval:
   - ~(if (file-exists-p "~/.gitconfig") "no" "~/.gitconfig")~
   - ~(if (eq system-type 'windows-nt) "yes" "no")~
     - Valid types: ~'windows-nt~, ~'gnu/linux~, ~'darwin~
   - ~(if (string-suffix-p "chip" hostname) "~/.i3/config" "no")~
     - Only supported variable is: ~hostname~
-- Any blocks with ~#+begin_src sh :eval yes~ will be executed as well. The
-  above elisp checks are supported as well.
+- Any blocks with ~#+begin_src sh :eval yes~ will be executed as
+  well. The above elisp checks are supported as well.
 
 #+begin_src text
   $ make tangleawk
@@ -78,11 +77,7 @@ This will run the ~tangle.awk~ script which attempts to emulate emacs
     ~/.zshrc.local
 #+end_src
 
-** ~make tangleorg~
-
-Alternative to ~tangleawk~ this uses emacs to tangle all ~*.org~ files.
-
-** ~./make.awk~
+* ~./make.awk~
 
 This is a ~gawk~ based task runner with some convenience functions for running
 shell commands, downloading archives, and git cloning.
@@ -99,3 +94,7 @@ shell commands, downloading archives, and git cloning.
 #+end_src
 
 It covers most of the use cases I needed in the root ~Makefile~.
+* ~make tangleorg~
+
+Alternative to ~tangleawk~ this uses emacs to tangle all ~*.org~ files.
+
