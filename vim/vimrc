@@ -1,0 +1,265 @@
+" Disable old vi compatibility
+set nocompatible
+
+" Plugin Init
+" -----------
+" Include fzf plugin to run-time-path
+set rtp+=$HOME/workbench/source/fzf
+" Use pathogen to setup plugins in ~/.vim/bundle
+execute pathogen#infect()
+
+" Colors
+" ------
+" Enable 256 colors in the terminal.
+" (use 'tmux -2' to enable 256 colors in tmux)
+set t_Co=256
+" Enable truecolor terminal mode.
+set termguicolors
+
+" Themes
+" ------
+" If on Android termux
+" let unameo = system('uname -o')
+if $HOME == "/data/data/com.termux/files/home"
+  set background=light
+  colorscheme bw
+else  " Desktop colors
+  " set number          " line numbering
+  " set relativenumber  " relative line numbering
+  set background=dark
+  " let g:airline_theme='behelit'
+  " let g:airline_theme='aludin'
+  " let g:one_allow_italics = 1
+  " colorscheme PaperColor
+  colorscheme one
+  " colorscheme distinguished
+  " colorscheme ir_black-256
+  " colorscheme molokai
+  " colorscheme atomic
+endif
+
+" Vertical window separator character
+" -----------------------------------
+" Vertical bar
+execute "set fillchars+=vert:│"
+" Space
+" execute "set fillchars+=vert:\\ "
+
+" Standard Settings
+" -----------------
+
+" Use bash for !commands and make/dispatch
+set shell=bash
+
+set noswapfile
+set nobackup  " do not keep a backup file (file~), use versions instead
+
+set cursorline
+set hlsearch
+set autoindent
+
+set wildmode=list:longest " specifies how command line completion works
+set incsearch  " do incremental searching
+set ignorecase
+set smartcase
+set diffopt+=iwhite  " Ignore whitespace in vimdiff
+
+set mouse=a  " Enable the mouse
+
+set expandtab  " use spaces for tabs
+
+" File Open and Write Hooks
+" -------------------------
+" Open files to last known position
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+endif
+" Clear trailing whitespace and retab (remove tab characters) before saving
+autocmd BufWritePre * :%s/\s\+$//e | retab
+
+" Key bindings
+" ------------
+
+" h/l stay in default colemak locations
+" n/e remapped to down up
+nnoremap n gj|xnoremap n gj|onoremap n gj
+nnoremap e gk|xnoremap e gk|onoremap e gk
+" Use k/K for next/previous search hits
+nnoremap k n|xnoremap k n|onoremap k n
+nnoremap K N|xnoremap K N|onoremap K N
+" Bubble single lines
+nmap <C-e> [e
+nmap <C-n> ]e
+" Bubble multiple lines
+vmap <C-e> [egv
+vmap <C-n> ]egv
+
+" Ctrl-S to save
+" run 'stty -ixon' so C-s doesn't freeze the terminal, C-q unfreezes
+nnoremap <c-s> :w<cr>
+inoremap <c-s> <esc>:w<cr>
+vnoremap <c-s> <esc>:w<cr>
+" C-g to escape insert mode
+inoremap <c-g> <esc>
+
+" Hit ; to do the same thing as :
+nnoremap ; :|xnoremap ; :|
+nnoremap q; q:|xnoremap q; q:|
+
+" Hit <CR> to do the same thing as :
+nnoremap <CR> :|xnoremap <CR> :|
+nnoremap g<CR> <CR>|xnoremap g<CR> <CR>|
+
+" Leader key maps ------------------------------------------------------------
+let mapleader = ","
+
+" edit ~/.vimrc with ,v
+nnoremap <leader>v :e $MYVIMRC<CR>
+
+" set paste toggle
+nnoremap <leader>sp :set paste!<cr>
+" set truncate (nowrap) toggle
+nnoremap <leader>st :set wrap!<cr>
+" set line numbering toggles
+nnoremap <leader>sl :set number! relativenumber!<cr>
+nnoremap <leader>sL :set number!<cr>
+nnoremap <leader>sR :set relativenumber!<cr>
+" set whitespace visualization
+nnoremap <leader>sw :set list!<cr>
+
+" set :make command to rake
+" let &makeprg = "cd ~/project/ && make "
+
+" Run a commands asyncronously in a tmux split
+" when done open a buffer with the results
+nnoremap <leader>t :Dispatch -compiler=pytest -dir=~/project rake test<CR>
+" nnoremap <leader>t :!bash -c 'cd ~/kadc-on-call/ && rake test'<CR>
+
+nnoremap <leader>tl :tabnext<cr>
+nnoremap <leader>tL :tabnew<cr>
+nnoremap <leader>th :tabprevious<cr>
+
+" Run make using Dispatch
+nnoremap <leader>rr :Make<cr>
+nnoremap <leader>rc :Make<space>
+" Run current file
+nnoremap <leader>rf :Dispatch ./%<CR>
+
+" open directory browser with ,d
+nnoremap <leader>d :Ex<cr>
+" file browser (netrw) options
+" start it by:
+" - opening a directory
+" - running :Ex
+" <leader>d binding
+" let g:netrw_browse_split = 2 " open new files in vertical split
+
+
+" jump to the next/prev quickfix errors
+nnoremap <leader>n :cnext<cr>
+nnoremap <leader>p :cprevious<cr>
+
+nnoremap <leader>u :UndotreeToggle<cr>
+nnoremap <leader>g :Git<cr>
+nnoremap <leader>bb :CtrlPBuffer<cr>
+nnoremap <leader>fc :CtrlPQuickfix<cr>
+nnoremap <leader>bk :q!<cr>
+nnoremap <leader>m :CtrlPBufTagAll<cr>
+nnoremap <leader>o :silent !ctags -R *.py kadc tests<cr>:CtrlPTag<cr>
+
+" Plugin Settings
+" ---------------
+
+" Error Checking with Syntastic
+let g:syntastic_python_checkers = ['flake8', 'python']
+let g:syntastic_rst_checkers = ['rstcheck'] " 'sphinx'
+" let g:syntastic_rst_sphinx_source_dir = ''
+" let g:syntastic_rst_sphinx_config_dir = ''
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+nnoremap <c-p> :FZF<CR>
+
+let g:ctrlp_map = ''
+let g:ctrlp_cmd = 'CtrlP'
+
+" Ctrlp: Use git ls-files
+let g:ctrlp_user_command = {
+      \ 'types': {
+      \ 1: ['.git', 'cd %s && git ls-files'],
+      \ 2: ['.hg', 'hg --cwd %s locate -I .'],
+      \ },
+      \ 'fallback': 'find %s -type f'
+      \ }
+
+" Ignore some file types in ctrlp
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\v[\/](\.git|\.hg|\.svn)$',
+  \ 'file': '\v\.(pyc|exe|so|dll)$',
+  \ 'link': 'some_bad_symbolic_links',
+  \ }
+" Ctrlp: Enable extensions
+let g:ctrlp_extensions = [ 'tag', 'buffertag', 'quickfix' ]
+" 'dir', 'rtscript', 'undo', 'line', 'changes', 'mixed', 'bookmarkdir'
+
+" vim-flagship recommended modeline settings
+set laststatus=2
+set showtabline=2
+set guioptions-=e
+set guifont=Iosevka\ SS08
+" This seems to happen automatically:
+" autocmd User Flags call Hoist("buffer", "fugitive#statusline")
+autocmd User Flags call Hoist("window", "SyntasticStatuslineFlag")
+
+
+" Tmux window split settings: Use Alt-hnel to move
+let g:tmux_navigator_no_mappings = 1
+" Set meta movement keys to use \e - thats what Alacritty sends.
+" Check what your terminal sends for a keypress by running `sed -n l`
+execute "set <M-h>=\eh"
+execute "set <M-n>=\en"
+execute "set <M-e>=\ee"
+execute "set <M-l>=\el"
+" Make the bindings
+nnoremap <silent> <M-h> :TmuxNavigateLeft<cr>
+nnoremap <silent> <M-n> :TmuxNavigateDown<cr>
+nnoremap <silent> <M-e> :TmuxNavigateUp<cr>
+nnoremap <silent> <M-l> :TmuxNavigateRight<cr>
+
+" Custom Functions
+" ----------------
+
+" Align text into columns by filtering through align.awk
+
+" Normal mode with the cursor inside any paragraph press: glip
+nnoremap <silent> gl :set opfunc=RunAwk<cr>g@
+" Visual select something then press gl
+vnoremap <silent> gl :!align.awk<cr>
+vnoremap <silent> gt :!column -t -o ' '<cr>
+
+function! RunAwk(type)
+    echom a:type
+    let saved_unnamed_register = @@
+    if a:type ==# 'v'
+        exe ":'[,']!align.awk"
+    elseif a:type ==# 'line'
+        exe ":'[,']!align.awk"
+    else
+        " Do nothing for character mode
+        return
+    endif
+    let @@ = saved_unnamed_register
+endfunction
+" Sources:
+" https://learnvimscriptthehardway.stevelosh.com/chapters/33.html
+" https://stackoverflow.com/questions/18343471/using-external-commands-in-vim-map-operator-function
+
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+inoremap <expr> <cr>    pumvisible() ? asyncomplete#close_popup() : "\<cr>"
+
+autocmd User asyncomplete_setup call asyncomplete#register_source(
+    \ asyncomplete#sources#clang#get_source_options())
+

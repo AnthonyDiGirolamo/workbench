@@ -1,0 +1,394 @@
+#+TITLE: Arch Linux Notes
+#+STARTUP: showall
+#+STARTUP: indent
+#+PROPERTY: header-args :mkdirp yes
+
+* Install Guide
+
+- Links
+  - [[https://wiki.archlinux.org/title/Installation_guide][arch wiki install guide]],
+  - [[https://jpetazzo.github.io/2024/02/23/archlinux-luks-tpm-secureboot-install/][Installing Archlinux with LUKS, SecureBoot, TPM]]
+  - [[https://gist.github.com/noghartt/8388f7d8543e3eb1777cb6ed4a3d7807][My Arch Linux installation - systemd-boot + LUKS + LVM + Btrfs + swapfile + xmonad]]
+  - [[https://github.com/mtalexan/arch-systemd-boot][LVM on LUKS with systemd-boot]]
+  - [[https://gist.github.com/OdinsPlasmaRifle/e16700b83624ff44316f87d9cdbb5c94]]
+
+* Install Steps
+:PROPERTIES:
+:header-args: :dir /ssh:root@192.168.0.32:~/ :results output :session :async yes :var ROOTDISK=ROOTDISK
+:END:
+
+** Set a password, connect to wifi/or ethernet
+
+Run these manually on the new install, then update the ip address in the above ~header-args~.
+
+#+begin_src bash
+  ip addr
+  iwctl station wlan0 connect SSID
+#+end_src
+
+#+begin_src bash
+  passwd root
+  systemctl start sshd
+  systemctl status sshd
+#+end_src
+
+ #+begin_src bash
+   uname -n
+ #+end_src
+
+ #+RESULTS:
+ : archiso
+
+** Set console font size
+
+#+begin_src bash
+  ls /usr/share/kbd/consolefonts/ter-1*
+#+end_src
+
+#+RESULTS:
+#+begin_example
+/usr/share/kbd/consolefonts/ter-112n.psf.gz
+/usr/share/kbd/consolefonts/ter-114b.psf.gz
+/usr/share/kbd/consolefonts/ter-114n.psf.gz
+/usr/share/kbd/consolefonts/ter-116b.psf.gz
+/usr/share/kbd/consolefonts/ter-116n.psf.gz
+/usr/share/kbd/consolefonts/ter-118b.psf.gz
+/usr/share/kbd/consolefonts/ter-118n.psf.gz
+/usr/share/kbd/consolefonts/ter-120b.psf.gz
+/usr/share/kbd/consolefonts/ter-120n.psf.gz
+/usr/share/kbd/consolefonts/ter-122b.psf.gz
+/usr/share/kbd/consolefonts/ter-122n.psf.gz
+/usr/share/kbd/consolefonts/ter-124b.psf.gz
+/usr/share/kbd/consolefonts/ter-124n.psf.gz
+/usr/share/kbd/consolefonts/ter-128b.psf.gz
+/usr/share/kbd/consolefonts/ter-128n.psf.gz
+/usr/share/kbd/consolefonts/ter-132b.psf.gz
+/usr/share/kbd/consolefonts/ter-132n.psf.gz
+#+end_example
+
+#+begin_src bash :results silent
+  setfont -d ter-118b
+#+end_src
+
+Large size for 4k screens:
+
+#+begin_src bash :results silent
+  setfont -d ter-132b
+#+end_src
+
+** Partition and format disk
+- 1G EFI System
+- The rest as a Linux filesystem
+
+#+name: ROOTDISK
+/dev/nvme0n1
+
+You can run ~cfdisk /dev/nvme0n1~ interactively to setup the
+partitions. Or use sgdisk commands as shown below.
+
+*** Printing disk status
+
+#+begin_src bash
+  lsblk -f $ROOTDISK
+#+end_src
+
+#+RESULTS:
+: NAME FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+: nvme0n1
+: │
+: ├─nvme0n1p1
+: │    vfat   FAT32       865D-4D25
+: └─nvme0n1p2
+:      btrfs              99ca6edc-dae2-44bb-ad61-b17903d5f267
+
+#+begin_src bash
+  sgdisk $ROOTDISK --print
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Disk /dev/nvme0n1: 976773168 sectors, 465.8 GiB
+Model: Samsung SSD 970 EVO 500GB
+Sector size (logical/physical): 512/512 bytes
+Disk identifier (GUID): 3BA0E131-5C6C-4047-A328-C79FAB2970CA
+Partition table holds up to 128 entries
+Main partition table begins at sector 2 and ends at sector 33
+First usable sector is 34, last usable sector is 976773134
+Partitions will be aligned on 2048-sector boundaries
+Total free space is 2014 sectors (1007.0 KiB)
+
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1            2048         2099199   1024.0 MiB  EF00  boot
+   2         2099200       976773134   464.8 GiB   8304  archlinux
+#+end_example
+
+*** GPT partition from scratch
+
+#+begin_src bash
+  sgdisk $ROOTDISK --clear
+#+end_src
+
+1G boot EFI partition
+#+begin_src bash
+  sgdisk $ROOTDISK --new=0:0:+1G --change-name=0:boot --typecode=0:ef00
+#+end_src
+
+The rest as / linux filesystem
+#+begin_src bash
+  sgdisk $ROOTDISK --new=0:0:+ --change-name=0:archlinux --typecode=0:8304
+#+end_src
+
+#+RESULTS:
+: The operation has completed successfully.
+
+*** format boot
+
+#+begin_src bash
+  mkfs.fat -F 32 /dev/disk/by-partlabel/boot
+#+end_src
+
+*** encryption and lvm
+
+Format and open interactively entering passphrases:
+#+begin_src bash
+  # cryptsetup luksFormat /dev/disk/by-partlabel/archlinux
+  # cryptsetup open /dev/disk/by-partlabel/archlinux cryptlvm
+#+end_src
+
+#+begin_src bash
+  cryptsetup status /dev/mapper/cryptlvm
+#+end_src
+
+*** setup lvm
+
+#+begin_src bash
+  pvcreate /dev/mapper/cryptlvm
+#+end_src
+
+#+begin_src bash
+  vgcreate vg /dev/mapper/cryptlvm
+#+end_src
+
+#+begin_src bash
+  lvcreate -l 100%FREE vg -n root
+#+end_src
+
+*** format /
+
+#+begin_src bash
+  mkfs.btrfs -L root -f /dev/mapper/vg-root
+#+end_src
+
+#+begin_src bash
+  mount /dev/mapper/vg-root /mnt
+#+end_src
+
+Not sure about btrfs subvolumes. Are they easier to resize than lvms?
+
+#+begin_src bash
+  btrfs subvolume create /mnt/root
+  btrfs subvolume create /mnt/home
+#+end_src
+
+*** mount the partitions
+
+#+begin_src bash
+  #TBD
+#+end_src
+
+*** create a swapfile
+
+#+begin_src bash
+  mkswap -U clear --size 4G --file /swapfile
+#+end_src
+
+* libvirt
+
+1. Install
+
+   #+begin_src sh
+     sudo pacman -S virt-manager libvirt qemu-full dnsmasq
+   #+end_src
+
+2. Setup
+
+   #+begin_src sh
+     sudo usermod anthony -a -G libvirt
+   #+end_src
+
+3. Disable dnsmasq, libvirt will start it.
+
+   #+begin_src sh
+     sudo systemctl status dnsmasq.service
+   #+end_src
+
+4. If using ufw set networking to use iptables. dhcp will be blocked otherwise
+
+   #+begin_src sh
+     sudo echo 'firewall_backend = "iptables"' >> /etc/libvirt/network.conf
+   #+end_src
+
+5. Start libvirt and enable networking
+
+   #+begin_src sh
+     sudo systemctl start libvirtd.service
+   #+end_src
+
+   #+begin_src sh
+     sudo virsh net-autostart --network default
+     sudo virsh net-start default
+     sudo virsh net-list --all
+   #+end_src
+
+   See [[https://www.haiku-os.org/guides/virtualizing/KVM][Emulating Haiku in KVM]] for more network details.
+
+6. Stop libvirt
+
+   #+begin_src sh
+     sudo systemctl stop libvirtd.service libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket
+   #+end_src
+
+* wpa
+
+** setup script
+
+#+begin_src fundamental :noweb-ref ssid
+  example-ssid
+#+end_src
+
+#+begin_src fundamental :noweb-ref password
+  example-password
+#+end_src
+
+#+begin_src fundamental :noweb-ref interface
+  example-interface
+#+end_src
+
+#+begin_src sh :tangle ~/setupwpasupplicant.sh :noweb yes :shebang #!/bin/bash
+  INTERFACE=<<interface>>
+  cat <<EOF > /etc/wpa_supplicant/wpa_supplicant.conf
+  ctrl_interface=/run/wpa_supplicant
+  update_config=1
+  EOF
+
+  ip link set $INTERFACE up
+  wpa_supplicant -B -i $INTERFACE -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+  # if there is no network 0, add it
+  ! wpa_cli list_networks | grep -E "^0\s+" && wpa_cli add_network
+
+  wpa_cli <<EOF
+  scan
+  set_network 0 ssid "<<ssid>>"
+  set_network 0 psk "<<password>>"
+  enable_network 0
+  save_config
+  EOF
+
+  systemctl enable wpa_supplicant@$INTERFACE
+  systemctl start  wpa_supplicant@$INTERFACE
+  systemctl status wpa_supplicant@$INTERFACE
+
+  systemctl enable dhcpcd@$INTERFACE
+  systemctl start  dhcpcd@$INTERFACE
+  systemctl status dhcpcd@$INTERFACE
+#+end_src
+
+* dhcpcd
+
+** Don't wait for an IP durring boot
+
+#+begin_src sh
+  sudo systemctl edit dhcpcd@.service --drop-in=no-wait
+#+end_src
+
+#+begin_src conf :tangle /etc/systemd/system/dhcpcd@.service.d/no-wait.conf
+  [Service]
+  ExecStart=
+  ExecStart=/usr/bin/dhcpcd -q -b %I
+#+end_src
+
+* packages
+
+Explicitly installed packages
+
+#+begin_src sh
+  pacman -Qe
+#+end_src
+
+Explicitly installed by parent group
+
+#+begin_src sh
+  pacman -Qeg
+#+end_src
+
+* aur packages
+
+#+begin_src sh
+  git clone https://aur.archlinux.org/lux.git
+  git clone https://aur.archlinux.org/google-chrome.git
+  # git clone https://aur.archlinux.org/chrome-remote-desktop.git
+  # git clone https://aur.archlinux.org/layan-gtk-theme-git.git
+  # git clone https://aur.archlinux.org/paper-icon-theme-git.git
+#+end_src
+
+** google-chrome
+
+#+begin_src sh
+  mkdir -p ~/aurpkgs
+  cd ~/aurpkgs
+  rm -rf google-chrome.git
+  git clone https://aur.archlinux.org/google-chrome.git google-chrome.git
+  cd google-chrome.git
+  makepkg -is
+#+end_src
+
+* lm_sensors
+
+#+begin_src sh
+  # install
+  sudo pacman -S lm_sensors
+  # display configured sensors
+  sensors
+#+end_src
+
+* luks cryptsetup
+
+** setup new partition
+
+#+begin_src sh
+  # format luks
+  cryptsetup luksFormat /dev/nvme0n1p7
+  cryptsetup open /dev/$PARTITION auxdata
+  cryptsetup status /dev/mapper/auxdata
+
+  # format btrfs
+  mkfs.btrfs -L auxdata /dev/mapper/auxdata
+  mount /dev/mapper/auxdata /mnt/auxdata
+  btrfs filesystem usage /mnt/auxdata
+#+end_src
+
+** get info
+
+#+begin_src sh
+  # list disks
+  lsblk -f
+
+  # get encryption info
+  cryptsetup status /dev/mapper/root
+  cryptsetup luksDump /dev/$PARTITION
+
+  # or
+  dmsetup table
+#+end_src
+
+** mount script
+
+#+begin_src sh
+  #!/bin/bash
+  sudo cryptsetup open /dev/$PARTITION auxdata
+  sudo cryptsetup status /dev/mapper/root
+  sudo mount /dev/mapper/auxdata /mnt/auxdata
+  sudo btrfs filesystem usage /mnt/auxdata/
+  lsblk -f
+#+end_src

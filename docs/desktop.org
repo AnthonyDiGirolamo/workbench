@@ -1,0 +1,26 @@
+#+STARTUP: content
+
+* GTK & Gnome Settings
+
+** GTK Icon Sizes for hidpi
+
+   #+BEGIN_SRC sh
+     xfconf-query -c xsettings -p /Gtk/IconSizes -s "gtk-menu=48,48:gtk-small-toolbar=48,48:gtk-large-toolbar=64,64:gtk-button=48,48:gtk-dnd=64,64:gtk-dialog=128,128"
+     ToolbarIconSize 3
+   #+END_SRC
+
+** Gnome Window Modifier key
+
+   #+BEGIN_SRC sh
+     gsettings set org.gnome.desktop.wm.preferences resize-with-right-button true
+     gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier '<Alt>'
+   #+END_SRC
+
+* XFCE4
+
+** Clock Format
+
+   #+BEGIN_SRC text
+     <span size='large'>📅</span> <span font_family='Roboto Light'>%A %B %d %Y</span>  <span size='large'>🕒</span> <span font_family='Roboto Medium'>%R</span>
+   #+END_SRC
+

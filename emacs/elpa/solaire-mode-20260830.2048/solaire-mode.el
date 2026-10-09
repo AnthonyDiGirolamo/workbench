@@ -1,0 +1,567 @@
+;;; solaire-mode.el --- make certain buffers grossly incandescent -*- lexical-binding: t; -*-
+;;
+;; Copyright (C) 2017-2026 Henrik Lissner
+;;
+;; Author: Henrik Lissner <http://github/hlissner>
+;; Maintainer: Henrik Lissner <contact@henrik.io>
+;; Created: June 3, 2017
+;; Modified: August 30, 2026
+;; Package-Version: 20260830.2048
+;; Package-Revision: ea97e01e1f97
+;; Keywords: dim bright window buffer faces
+;; Homepage: https://github.com/hlissner/emacs-solaire-mode
+;; Package-Requires: ((emacs "27.1") (cl-lib "0.5"))
+;;
+;; This file is not part of GNU Emacs.
+;;
+;;; Commentary:
+;;
+;; `solaire-mode' is inspired by editors who visually distinguish code-editing
+;; windows from sidebars, popups, terminals, ecetera. It changes the background
+;; of file-visiting buffers (and certain aspects of the UI) to make them easier
+;; to distinguish from other, not-so-important buffers.
+;;
+;; Praise the sun.
+;;
+;;; Installation
+;;
+;; M-x package-install RET solaire-mode
+;;
+;;   (require 'solaire-mode)
+;;   (solaire-global-mode +1)
+;;
+;; And to unconditionally darken certain buffers:
+;;
+;;   (add-hook 'ediff-prepare-buffer-hook #'solaire-mode)
+;;
+;;; Code:
+
+(eval-when-compile (require 'cl-lib))
+(require 'face-remap)
+
+(defgroup solaire nil
+  "Options for solaire-mode."
+  :group 'faces)
+
+
+;;
+;;; * Faces
+
+;;;###autoload
+(defface solaire-default-face '((t :inherit default))
+  "Alternative version of the `default' face.")
+
+(defface solaire-fringe-face '((t :inherit solaire-default-face))
+  "Alternative version of the `fringe' face.")
+
+(defface solaire-line-number-face
+  `((t :inherit (,(if (boundp 'display-line-numbers) 'line-number 'linum)
+                 solaire-default-face)))
+  "Alternative face for `line-number'.
+Used by native line numbers in Emacs 26+ and `linum'.")
+
+(defface solaire-hl-line-face '((t :inherit hl-line))
+  "Alternative face for the current line, highlighted by `hl-line'.")
+
+(defface solaire-org-hide-face '((t :inherit org-hide))
+  "Alternative face for `org-hide'.
+Used to camoflauge the leading asterixes in `org-mode' when
+`org-hide-leading-stars' is non-nil.")
+
+(defface solaire-region-face '((t :inherit region))
+  "Alternative face for `region' (the active selection).")
+
+(defface solaire-mode-line-face '((t :inherit mode-line))
+  "Alternative face for the `mode-line' face.")
+
+(defface solaire-mode-line-active-face '((t :inherit mode-line-active))
+  "Alternative face for the `mode-line-active' face (Emacs 29+).")
+
+(defface solaire-mode-line-inactive-face '((t :inherit mode-line-inactive))
+  "Alternative face for the `mode-line-inactive' face.")
+
+(defface solaire-header-line-face '((t :inherit header-line))
+  "Alternative face for the `header-line' face.")
+
+
+;;
+;;; * Options
+
+(defcustom solaire-mode-real-buffer-fn #'solaire-mode-real-buffer-p
+  "The function that determines buffer eligability for `solaire-mode'.
+
+Should accept one argument: the buffer and return truthy for buffers where
+`solaire-mode' should *not* be activated."
+  :type 'function)
+
+(defcustom solaire-mode-remap-alist
+  `((default                    . solaire-default-face)
+    (hl-line                    . solaire-hl-line-face)
+    (region                     . solaire-region-face)
+    (org-hide                   . solaire-org-hide-face)
+    (org-indent                 . solaire-org-hide-face)
+    (linum                      . solaire-line-number-face)
+    (line-number                . solaire-line-number-face)
+    (header-line                . solaire-header-line-face)
+    (mode-line                  . solaire-mode-line-face)
+    (mode-line-active           . solaire-mode-line-active-face)
+    (mode-line-inactive         . solaire-mode-line-inactive-face)
+    (highlight-indentation-face . solaire-hl-line-face)
+    (fringe                     . solaire-fringe-face)
+    ;; emacs-solaire-mode#51
+    (treemacs-window-background-face . solaire-default-face)
+    (treemacs-hl-line-face . solaire-hl-line-face))
+  "An alist of faces to remap when enabling `solaire-mode'."
+  :type '(repeat (cons (face :tag "Source face")
+                       (face :tag "Destination face"))))
+
+(defcustom solaire-mode-swap-alist (copy-sequence solaire-mode-remap-alist)
+  "An alist of faces to swap.
+
+This is used when the current theme is in `solaire-mode-themes-to-face-swap'.
+
+The CAR is the package to wait for before performing the swap.
+The CDR is a list of cons cells mapping the original face to the new face to
+remap them to."
+  :type '(repeat (cons (face :tag "Source face")
+                       (face :tag "Destination face"))))
+
+(defcustom solaire-mode-themes-to-face-swap '()
+  "A list of themes to automatically swap bg faces for.
+
+Each rule can be a regexp string (tested against the name of the theme being
+loaded), the name of a theme (symbol), or a function predicate that takes one
+argument (the currently loaded theme) and returns true if that theme's bg faces
+should be swapped.
+
+If the regexp or symbol matches the current theme (or the function returns
+non-nil), `solaire-mode-swap-faces-maybe' is used.
+
+Must be set before you enable themes with `load-theme'!"
+  :type '(repeat (choice symbol regexp function)))
+
+(defcustom solaire-mode-supported-themes '()
+  "A list of themes to forcibly enable support for.
+
+By default, `solaire-mode' auto-disables itself if the enabled theme doesn't
+support it (for performance reasons). Any themes listed here will be treated as
+if they have support, whether or not that's true.
+
+This variable can be `:all' (force-enable solaire for all themes), nil (the
+default behavior), or a list of symbols (theme names), regexps (to be matched
+against the theme being enabled), or functions (that take a single argument: the
+theme as a symbol being enabled and returns non-nil if it is to be treated as
+supported).
+
+Must be set before you enable themes with `load-theme'!"
+  :type '(choice (repeat (choice symbol regexp function))
+                 (const :tag "Force enable for all themes" :all)
+                 (const :tag "Only supported themes" nil)))
+
+(defvar solaire-mode--supported-p nil)
+(defvar solaire-mode--swap-supported-p nil)
+(defvar solaire-mode--swapped-p nil)
+(defvar solaire-mode--theme nil)
+(defvar-local solaire-mode--remaps nil)
+
+
+;;
+;;; * Helpers
+
+(defun solaire-mode-real-buffer-p ()
+  "Return t if the current buffer is a real (file-visiting) buffer."
+  (buffer-file-name (buffer-base-buffer)))
+
+(defun solaire-mode--map-inherit (spec fn)
+  "Return a copy of face SPEC with `:inherit' face lists mapped through FN.
+
+FN is called with a list of face symbols and returns the new list; if it returns
+nil the `:inherit' attribute is dropped from that entry. Non-face values (nil,
+`unspecified', or an inline anonymous face such as \(:foreground \"red\")) are
+passed through untouched."
+  (mapcar (lambda (entry)
+            (let* ((display (car entry))
+                   (rest (cdr entry))
+                   ;; Handle both (DISPLAY ATTS) and the old (DISPLAY . ATTS) form.
+                   (nested (not (keywordp (car rest))))
+                   (atts (if nested (car rest) rest))
+                   out)
+              (while atts
+                (let ((key (car atts))
+                      (val (cadr atts)))
+                  (if (or (not (eq key :inherit))
+                          (null val)
+                          (eq val 'unspecified)
+                          (and (consp val) (keywordp (car val))))
+                      (setq out (cons val (cons key out)))
+                    (when-let* ((faces (funcall fn (if (consp val)
+                                                       (copy-sequence val)
+                                                     (list val)))))
+                      (setq out (cons (if (cdr faces) faces (car faces))
+                                      (cons key out)))))
+                  (setq atts (cddr atts))))
+              (setq out (nreverse out))
+              (cons display (if nested (list out) out))))
+          spec))
+
+(defun solaire-mode--face-parents (face specs)
+  (if-let* ((cell (assq face specs)))
+      (let (faces)
+        (solaire-mode--map-inherit
+         (cdr cell) (lambda (fs) (push fs faces) fs))
+        (delete-dups (nreverse faces)))
+    (when (facep face)
+      (let ((v (face-attribute face :inherit)))
+        (cond ((or (null v) (eq v 'unspecified)) nil)
+              ((consp v) v)
+              ((list v)))))))
+
+(defun solaire-mode--inherits-p (face target specs &optional seen)
+  "Return non-nil if FACE reaches TARGET through `:inherit'.
+SPECS is an alist of (FACE . SPEC) overriding current definitions."
+  (cond ((eq face target))
+        ((memq face seen) nil)
+        ((cl-loop with seen = (cons face seen)
+                  for p in (solaire-mode--face-parents face specs)
+                  if (solaire-mode--inherits-p p target specs seen)
+                  return t))))
+
+(defun solaire-mode--swap-faces (pairs)
+  "Swap the face specs named in PAIRS."
+  (let ((settings (get solaire-mode--theme 'theme-settings))
+        custom--inhibit-theme-enable
+        specs)
+    (cl-flet ((theme-spec (face)
+                (cl-loop for s in settings
+                         if (and (eq (nth 0 s) 'theme-face)
+                                 (eq (nth 1 s) face))
+                         return (nth 3 s)))
+              (rename-inherit (spec old new)
+                (solaire-mode--map-inherit
+                 spec (lambda (faces)
+                        (cl-loop for f in faces
+                                 if (eq f old) collect new
+                                 else collect f)))))
+      (dolist (pair pairs)
+        (let* ((src (car pair))
+               (dest (cdr pair))
+               (spec1 (theme-spec src))
+               (spec2 (theme-spec dest)))
+          (when (and spec1 spec2)
+            (setf (alist-get src specs)  (rename-inherit spec2 src nil)
+                  (alist-get dest specs) (rename-inherit spec1 dest src))))))
+    (cl-loop for cell in specs
+             collect
+             (list (car cell)
+                   ;; Drop edges that loop.
+                   (solaire-mode--map-inherit
+                    (cdr cell)
+                    (lambda (parents)
+                      (cl-loop for p in parents
+                               unless (solaire-mode--inherits-p
+                                       p (car cell) specs)
+                               collect p)))))))
+
+(defun solaire-mode-swap-faces-maybe ()
+  "Globally swap the current theme's background faces.
+
+See `solaire-mode-swap-alist' for list of faces that are swapped.
+See `solaire-mode-themes-to-face-swap' for themes where faces will be swapped."
+  (when (and (null solaire-mode--swapped-p)
+             solaire-mode--supported-p
+             solaire-mode--swap-supported-p)
+    (let ((swap-theme 'solaire-swapped-faces-theme)
+          (faces (solaire-mode--swap-faces solaire-mode-swap-alist)))
+      (custom-declare-theme swap-theme nil)
+      (put swap-theme 'theme-settings nil)
+      (if (not faces)
+          (disable-theme swap-theme)
+        (apply #'custom-theme-set-faces swap-theme faces)
+        (enable-theme swap-theme))
+      (setq solaire-mode--swapped-p t))))
+
+
+;;
+;;; * `solaire-mode' / `solaire-global-mode'
+
+;;;###autoload
+(define-minor-mode solaire-mode
+  "Make current buffer a different color so others can be grossly incandescent.
+
+Remaps faces in `solaire-mode-remap-alist', then runs `solaire-mode-hook', where
+additional mode-specific fixes may live. Lastly, adjusts the fringes for the
+current frame."
+  :lighter "" ; should be obvious it's on
+  :init-value nil
+  (if (not solaire-mode--supported-p)
+      (setq solaire-mode nil)
+    (mapc #'face-remap-remove-relative solaire-mode--remaps)
+    (setq solaire-mode--remaps nil)
+    (when solaire-mode
+      (dolist (remap solaire-mode-remap-alist)
+        (when (cdr remap)
+          (push (face-remap-add-relative (car remap) (cdr remap))
+                solaire-mode--remaps))))))
+
+;;;###autoload
+(define-globalized-minor-mode solaire-global-mode solaire-mode turn-on-solaire-mode)
+
+;;;###autoload
+(defun turn-on-solaire-mode (&rest _)
+  "Conditionally enable `solaire-mode' in the current buffer.
+
+Does nothing if the current buffer doesn't satisfy the function in
+`solaire-mode-real-buffer-fn'."
+  (interactive)
+  (and (not solaire-mode)
+       (or (minibufferp)
+           (not (funcall solaire-mode-real-buffer-fn)))
+       (solaire-mode +1)))
+
+;;;###autoload
+(defun turn-off-solaire-mode (&rest _)
+  "Disable `solaire-mode' in the current buffer."
+  (interactive)
+  (when solaire-mode
+    (solaire-mode -1)))
+
+;;;###autoload
+(defun solaire-mode-reset (&rest _)
+  "Reset `solaire-mode' in all buffers where it is enabled.
+
+Use this in case solaire-mode has caused some sort of problem, e.g. after
+changing themes.  are more prelevant in Emacs 25 and 26, but far less so in 27+;
+particularly where the fringe is concerned."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (solaire-mode-reset-buffer))))
+
+;;;###autoload
+(defun solaire-mode-reset-buffer ()
+  "Reset `solaire-mode' incurrent buffer.
+
+See `solaire-mode-reset' for details."
+  (when solaire-mode
+    (solaire-mode -1)
+    (solaire-mode +1)))
+
+
+;;
+;;; * Bootstrap
+
+;; The `progn' assures the whole form is inserted into the package's autoloads
+;; verbatim, rather than as `autoload' forms, so that this `load-theme' advice
+;; is active as soon as possible.
+;;;###autoload
+(progn
+  (defun solaire-mode--prepare-for-theme-a (theme &rest _)
+    "Prepare solaire-mode for THEME.
+Meant to be used as a `load-theme' advice."
+    (when (and
+           ;; Make sure THEME is a real theme (not a psuedo theme like
+           ;; `solaire-swapped-faces-theme').
+           (get theme 'theme-feature)
+           ;; And that it's been successfully enabled.
+           (memq theme custom-enabled-themes))
+      (let ((supported-p
+             (lambda (theme var)
+               (let ((rules (if (boundp var) (symbol-value var))))
+                 (or (eq rules :all)
+                     (cl-loop for rule in rules
+                              if (cond ((functionp rule)
+                                        (funcall rule theme))
+                                       ((stringp rule)
+                                        (string-match-p rule (symbol-name theme)))
+                                       ((symbolp rule)
+                                        (eq rule theme)))
+                              return t))))))
+        (setq solaire-mode--theme theme
+              solaire-mode--supported-p
+              (or (cl-loop for spec in (get theme 'theme-settings)
+                           if (eq (nth 1 spec) 'solaire-default-face)
+                           return t)
+                  (funcall supported-p theme 'solaire-mode-supported-themes))
+              solaire-mode--swap-supported-p
+              (funcall supported-p theme 'solaire-mode-themes-to-face-swap)
+              solaire-mode--swapped-p nil))
+      (when (bound-and-true-p solaire-global-mode)
+        (if solaire-mode--supported-p
+            (solaire-mode-swap-faces-maybe)
+          (solaire-global-mode -1)))))
+  (advice-add #'load-theme :after #'solaire-mode--prepare-for-theme-a))
+
+(defvar evil-buffer-regexps)
+(defun solaire-mode-fix-minibuffer (&optional unset)
+  "Create minibuffer/echo area buffers to enable `solaire-mode' in them.
+
+If UNSET, resets these buffers instead.
+
+Emacs will always display one of *Minibuf-N* or *Echo Area N* (where X is 0 or
+1) in the minibuffer area. If these buffers don't exist OR they exist and are
+empty, they will be transparent, showing the (incorrect) background color of
+`default', but we want it to display `solaire-default-face' instead, so we
+create these buffers early and insert whitespace in them."
+  (dolist (buf '(" *Minibuf-0*" " *Minibuf-1*"
+                 " *Echo Area 0*" " *Echo Area 1*"))
+    (with-current-buffer (get-buffer-create buf)
+      (if (or unset (not solaire-global-mode))
+          (solaire-mode -1)
+        ;; HACK Fix #41: evil initializes itself in these buffers, whether or
+        ;;      not `evil-want-minibuffer' or `evil-collection-setup-minibuffer'
+        ;;      is non-nil, which is unwanted.
+        (setq-local evil-buffer-regexps '((".")))
+        ;; Minibuffers must be non-empty for solaire-default-face to apply to
+        ;; the whole line (otherwise it terminates at BOL).
+        (when (= (buffer-size) 0)
+          (insert (propertize " " 'invisible t)))
+        ;; Don't allow users to kill these buffers, as it destroys the hack
+        (add-hook 'kill-buffer-query-functions #'ignore nil 'local)
+        (solaire-mode +1)))))
+
+;; Make sure the minibuffer always has solaire-mode active in it.
+(add-hook 'solaire-global-mode-hook #'solaire-mode-fix-minibuffer)
+
+;; In case `solaire-global-mode' is enabled after `load-theme' is called.
+(add-hook 'solaire-global-mode-hook #'solaire-mode-swap-faces-maybe)
+
+(defun solaire-mode--auto-detect-theme ()
+  "Initialize solaire-mode for a recently enabled theme.
+
+This is only necessary if `solaire-mode--prepare-for-theme-a' wasn't executed
+when the user loaded their latest theme. E.g. the user loads this package
+without its autoloads. Normally, you shouldn't directly call this."
+  (unless solaire-mode--theme
+    (let ((theme (cl-loop for th in custom-enabled-themes
+                          if (get th 'theme-feature)
+                          return th)))
+      (and (symbolp theme)
+           (custom-theme-enabled-p theme)
+           (solaire-mode--prepare-for-theme-a theme)))))
+
+(solaire-mode--auto-detect-theme)
+
+
+;;
+;;; * Package compatibility hackery
+
+(with-no-warnings  ; Shush, byte-compiler! Trust in Solaire.
+  ;; which-key and transient create their popups in splits and in
+  ;; fundamental-mode, which `solaire-global-mode' can't reach. This fixes that.
+  (defun solaire-mode--enable-if-global ()
+    "Activate `solaire-mode' in buffer if `solaire-global-mode' is active."
+    (when solaire-global-mode
+      (solaire-mode +1)))
+
+  ;;; which-key
+  (with-eval-after-load 'which-key
+    (add-hook 'which-key-init-buffer-hook #'solaire-mode--enable-if-global))
+
+  ;;; transient
+  (with-eval-after-load 'transient
+    (advice-add #'transient--insert-groups :before #'solaire-mode--enable-if-global))
+
+  ;;; image
+  (with-eval-after-load 'image
+    (define-advice create-image (:filter-return (image) fix-background-color)
+      "Create IMAGE with the correct (solaire-ized) background color."
+      (when solaire-mode
+        (plist-put (cdr image)
+                   :background (face-background 'solaire-default-face
+                                                nil t)))
+      image))
+
+  ;;; mini-modeline
+  (with-eval-after-load 'mini-modeline
+    (define-advice mini-modeline--set-buffer-face (:after (&rest _) fix-mismatched-fringe)
+      "Fix the mismatched fringe in the `mini-modeline' minibuffer.
+Meant to be used as `:after' advice for `mini-modeline--set-buffer-face'."
+      (when solaire-mode
+        (push (face-remap-add-relative 'fringe mini-modeline-face-attr)
+              solaire-mode--remaps))))
+
+  ;;; persp-mode
+  (with-eval-after-load 'persp-mode
+    (define-advice persp-load-state-from-file (:after (&rest _) restore-solaire-mode)
+      "Restore `solaire-mode' in new `persp-mode' sessions."
+      (dolist (buf (persp-buffer-list))
+        (with-current-buffer buf
+          (turn-on-solaire-mode)))))
+
+  ;;; term / ansi-term
+  (defun solaire-mode--fix-term-mode ()
+    "Replace `term' with `solaire-default-face' in `ansi-term-color-vector'.
+Meant to fix mismatched background on text in term buffers (should be used on
+`solaire-mode-hook')."
+    (when (derived-mode-p 'term-mode)
+      (if (not solaire-mode)
+          (kill-local-variable 'ansi-term-color-vector)
+        (make-local-variable 'ansi-term-color-vector)
+        (setf (elt ansi-term-color-vector 0) 'solaire-default-face))))
+  (add-hook 'solaire-mode-hook #'solaire-mode--fix-term-mode)
+
+  ;;; vterm
+  (with-eval-after-load 'vterm
+    (define-advice vterm--get-color (:around (fn &rest args) fix-background)
+      "Fix hardcoded fallback to `default' face in vterm buffers."
+      (cl-letf* ((old-face-background (symbol-function #'face-background))
+                 ((symbol-function #'face-background)
+                  (lambda (face &rest args)
+                    (apply old-face-background
+                           (if (and (eq face 'default) (bound-and-true-p solaire-mode))
+                               'solaire-default-face
+                             face)
+                           args))))
+        (apply fn args))))
+
+  ;;; mixed-pitch / variable-pitch
+  ;; Reset solaire-mode so its remappings assimilate the remappings done by
+  ;; `mixed-pitch-mode' and `variable-pitch-mode'.
+  (add-hook 'mixed-pitch-mode-hook #'solaire-mode-reset-buffer)
+  (add-hook 'buffer-face-mode-hook #'solaire-mode-reset-buffer)
+
+  ;;; `revert-buffer'
+  ;; Don't let revert-buffer disable `solaire-mode's effects
+  (put (defvar solaire-mode--last-state nil) 'permanent-local t)
+
+  (defun solaire-mode--remember ()
+    "Remember `solaire-mode's state for `solaire-mode--restore' to restore it."
+    (setq-local solaire-mode--last-state solaire-mode))
+  (add-hook 'before-revert-hook #'solaire-mode--remember)
+
+  (defun solaire-mode--restore ()
+    "Restore `solaire-mode' if it was enabled."
+    (when (and solaire-mode--last-state (not solaire-mode))
+      (solaire-mode +1)
+      (kill-local-variable 'solaire-mode--last-state)))
+  (add-hook 'after-revert-hook #'solaire-mode--restore)
+
+  ;;; `map-y-or-n-p'
+  ;; HACK Due to `map-y-or-n-p's unfortunate implementation, an ugly white
+  ;;      background is visible from EOL to EOW when the minibuffer's background
+  ;;      is remapped. This function is used in some visible places, like when
+  ;;      prompting to save buffers when quitting Emacs.
+  ;;
+  ;;      This doesn't totally fix the issue, but makes it more tolerable (by
+  ;;      using `default's unremapped background).
+  (define-advice map-y-or-n-p (:around (orig-fn prompter &rest args) fix-background)
+    "Fix ugly white background in `map-y-or-n-p' due to `solaire-mode'.
+ORIG-FN is `map-y-or-n-p' and ARGS are its arguments."
+    (let ((unset-p nil))
+      (unwind-protect
+          (apply orig-fn
+                 ;; This function won't actually prompt if PROMPTER returns a
+                 ;; non-string, which avoids what solaire-mode is trying to fix.
+                 (lambda (obj)
+                   (let ((result (if (stringp prompter)
+                                     (format prompter obj)
+                                   (funcall prompter obj))))
+                     (when (and (not unset-p) (stringp result))
+                       (setq unset-p t)
+                       (solaire-mode-fix-minibuffer 'unset))
+                     result))
+                 args)
+        (if unset-p (solaire-mode-fix-minibuffer))))))
+
+(provide 'solaire-mode)
+;;; solaire-mode.el ends here

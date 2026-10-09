@@ -1,0 +1,30 @@
+#+TITLE: sddm
+#+STARTUP: content indent
+#+PROPERTY: header-args :mkdirp yes
+
+* Table of Contents                                                     :TOC:
+- [[#etcsddmconfd10-waylandconf][~/etc/sddm.conf.d/10-wayland.conf~]]
+- [[#etcsddmconfdvirtualkbdconf][~/etc/sddm.conf.d/virtualkbd.conf~]]
+
+* ~/etc/sddm.conf.d/10-wayland.conf~
+
+#+begin_src conf :tangle no
+  [General]
+  # DisplayServer=wayland
+  GreeterEnvironment=QT_SCREEN_SCALE_FACTORS=1.5
+  # ,QT_FONT_DPI=192
+  # ,QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+
+  [Theme]
+  Current=breeze
+#+end_src
+
+* ~/etc/sddm.conf.d/virtualkbd.conf~
+
+#+begin_src conf :tangle no
+  [General]
+  # InputMethod=qtvirtualkeyboard
+
+  [Wayland]
+  # CompositorCommand=kwin_wayland --drm --no-lockscreen --no-global-shortcuts --locale1 --inputmethod plasma-keyboard
+#+end_src

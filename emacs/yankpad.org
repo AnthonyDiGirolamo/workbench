@@ -1,0 +1,334 @@
+#+STARTUP: indent
+
+* org-mode
+
+** ti: title                                                            :src:
+#+begin_src org
+  ,#+TITLE: $1
+  ,#+AUTHOR: $2
+  ,#+EMAIL: $3
+  ,#+LANGUAGE: en
+  ,#+OPTIONS: title:t toc:nil H:4 num:nil ^:nil ':nil
+  ,#+OPTIONS: html-style:nil html-preamble:t html-postamble:nil
+  ,#+HTML_DOCTYPE: html5
+  ,#+HTML_HEAD: <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono" rel="stylesheet">
+  ,#+HTML_HEAD: <link rel="stylesheet" href="styles/material.blue-indigo.min.css">
+  ,#+HTML_HEAD: <link rel="stylesheet" href="styles/material_style.css">
+  ,#+HTML_HEAD: <script defer src="styles/material.min.js"></script>
+  ,#+PROPERTY: UNNUMBERED t
+  $0
+#+end_src
+
+** src: src-block
+#+begin_src $1
+$0
+#+end_src
+
+** srce: src-block emacs-lisp
+#+begin_src emacs-lisp
+$0
+#+end_src
+
+** ta: org-mode table
+| $0 |  |
+|--+--|
+|  |  |
+
+* rst-mode
+
+** defcheckbox: html checkbox input example                  :src:indent_nil:
+#+begin_src rst-mode
+  .. |check| raw:: html
+
+      <input checked=""  type="checkbox">
+
+  .. |check_disabled| raw:: html
+
+      <input checked=""  disabled="" type="checkbox">
+
+  .. |uncheck| raw:: html
+
+      <input type="checkbox">
+
+  .. |uncheck_disabled| raw:: html
+
+      <input disabled="" type="checkbox">
+
+#+end_src
+
+** uncheck: unchecked box                                    :src:indent_nil:
+#+begin_src rst-mode
+  |uncheck|
+#+end_src
+
+* python-mode
+
+** ppimport                                                  :src:indent_nil:
+
+#+begin_src python
+  import pprint
+  _pp = pprint.PrettyPrinter(indent=1, width=120).pprint
+  _pf = pprint.PrettyPrinter(indent=1, width=120).pformat
+#+end_src
+
+** rc: regex compile                                         :src:indent_nil:
+#+begin_src python
+  menu_regex = re.compile(
+      r'^menu\.' # starts with "menu"
+      r'(?P<menu_option_name>[^.]+)\.' # first token after .
+      r'(?P<menu_option_value>[^.]+)$', re.MULTILINE) # second (final) token after .
+#+end_src
+
+** rm: regex match
+#+begin_src python
+  mmatch = self.menu_regex.match(moption)
+  if menu_match:
+      whole_match_string = mmatch[0]
+      first_group_matc_stringh = mmatch[1]
+      mmatch = menu_match.groupdict()
+      name = mmgd["menu_option_name"]
+      value = mmgd["menu_option_value"]
+#+end_src
+
+** shebang: env python3                                      :src:indent_nil:
+#+begin_src sh
+  #!/usr/bin/env python3
+  # coding=utf-8
+#+end_src
+
+** docopt: commandline docopt boilerplate                    :src:indent_nil:
+#+begin_src python
+  #!/usr/bin/env python3
+  # coding=utf-8
+
+  """mkscript
+
+  Usage:
+    mkscript [--directory NAME]
+    mkscript (-h | --help)
+    mkscript --version
+
+  Options:
+    -d NAME --directory=NAME  Directory name [default: build]
+    -h --help                 Show this screen.
+    --version                 Show version.
+  """
+
+  import os
+  import pprint
+  import sys
+  from docopt import docopt
+
+  pp = pprint.PrettyPrinter(indent=2, width=110).pprint
+
+  def main():
+      # Parse command line with docopt
+      arguments = docopt(__doc__, version=1)
+      pp(arguments)
+      os.system('pwd')        # Run command with no interaction
+      pp(os.environ['HOME'])  # Environment variable
+      pp(__file__)            # This script location
+      pp(os.getcwd())         # Current working directory
+      os.chdir(os.path.dirname(__file__))  # Change directory
+      exit(0)
+
+  if __name__ == '__main__':
+      main()
+#+end_src
+
+** readlines: file readlines boilerplate                     :src:indent_nil:
+#+begin_src python
+  #!/usr/bin/env python3
+  # coding=utf-8
+
+  import pprint
+  import re
+  import sys
+  from datetime import datetime, date, time
+  from pathlib import Path
+  pp = pprint.PrettyPrinter(indent=2).pprint
+
+  def main():
+    some_regex = re.compile(r'\n\n')
+    file_name = Path(os.path.expandvars(sys.argv[1])).absolute()
+
+    with file_name.open('r') as some_file:
+      for index, line in enumerate(some_file.readlines()):
+        pass
+
+  if __name__ == '__main__':
+    main()
+#+end_src
+
+** pdb: pdb breakpoint
+import pdb; pdb.set_trace()  # type: ignore # pylint: disable=import-outside-toplevel,multiple-statements
+
+** ipdb: ipdb breakpoint
+import ipdb; ipdb.set_trace()  # type: ignore # pylint: disable=import-outside-toplevel,multiple-statements
+
+** termw: write string to pseudo terminal                    :src:indent_nil:
+#+begin_src python
+with open('/dev/pts/2', 'w') as term:
+    term.write('value: {}\n'.format(value))
+    term.flush()
+#+end_src
+
+** inspect-configparser                                      :src:indent_nil:
+#+begin_src python
+  config_dict = { name:dict(i.items()) for name, i in config.items() }
+  from rich import inspect
+  # inspect(inspect)
+  inspect(
+      obj=config_dict,
+      value=True,
+      docs=False,
+  )
+#+end_src
+
+* lua-mode
+
+** class-from-scratch                                                   :src:
+#+begin_src lua
+  Canvas = {}
+  Canvas.__index = Canvas
+  setmetatable(Canvas, {
+    __call = function(_, ...)
+      return Canvas.new(...)
+    end
+  })
+
+  function Canvas.new(r, c)
+    local c = setmetatable(
+      {
+        canvas = {},
+        rows = r,
+        cols = c
+      },
+      Canvas
+    )
+    c:clear_canvas()
+    return c
+  end
+
+  function Canvas:clear_canvas()
+    self.canvas = {}
+    for y = 1, self.rows do
+      add(self.canvas, {})
+      for x = 1, self.cols do
+        add(self.canvas[y], {
+          0, 0, 0, -- fg rgb
+          0, 0, 0, -- bg rgb
+          EMPTY, -- character
+          16, -- fg 265 color number
+          16 -- bg 265 color number
+        })
+      end
+    end
+  end
+
+  function Canvas:__tostring()
+    return "Canvas [rows:" .. tostring(self.rows) .. ", cols:" .. tostring(self.cols) .. "]"
+  end
+#+end_src
+
+* conf-mode                                                             :src:
+
+#+begin_src conf
+  [Desktop Entry]
+  Encoding=UTF-8
+  Value=1.0
+  Type=Application
+  Name=Steam
+  GenericName=Steam
+  Comment=Steam
+  Icon=steam
+  Exec="/home/anthony/.local/share/Steam/steam.sh"
+  Categories=Game;
+  Path=/home/anthony/.local/share/Steam/
+#+end_src
+
+* fish-mode
+
+** projdir: script to cd to a project directory             :src:indent_nil:
+
+#+begin_src fish
+  #!/usr/bin/env fish
+  set PROJECT_DIR (readlink -f (dirname (status --current-filename)))
+  cd $PROJECT_DIR
+
+  # If args provided on the command line run that and exit.
+  if test (count $argv) -gt 0
+    exec $argv
+  end
+#+end_src
+
+* sh-mode
+
+** projdir: script to cd to a project directory             :src:indent_nil:
+
+*zsh expansion modifiers*
+
+- ~:h[digit]~ goes up one directory level
+- ~:A~ makes the path absolute and resolves symlinks.
+- https://zsh.sourceforge.io/Doc/Release/Expansion.html
+
+#+begin_src sh
+  #!/usr/bin/zsh
+  if test -n "$BASH"; then
+    SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+  elif test -n "$ZSH_NAME"; then
+    SCRIPT_DIR="${0:h:A}"
+  fi
+
+  export PROJECT_ROOT=$(readlink -f "${SCRIPT_DIR}")
+  cd $PROJECT_ROOT
+
+  exec $*
+#+end_src
+
+** echorun: echo a command and run it
+
+#+begin_src sh
+  ACTION_ARROW="\x1b[36m==>\x1b[0m"
+  function echorun () {
+      echo -e $ACTION_ARROW $*
+      $*
+  }
+#+end_src
+
+* emacs-lisp-mode
+
+** provide-block                                                       :src:
+
+#+begin_src emacs-lisp
+  ;;; -*- lexical-binding: t; -*-
+
+  ;;; $1.el --- Summary
+  ;;; Commentary:
+  ;;; Code:
+
+  (provide '$1)
+  ;;; $1.el ends here
+#+end_src
+
+* lisp-data-mode
+
+** dir-locals-lsp-path                                                 :src:
+
+Create a ~.projectile~ file in the project root folder if needed for ~(projectile-project-root)~ to work correctly.
+
+#+begin_src lisp-data
+  ;;; Directory Local Variables            -*- no-byte-compile: t -*-
+  ;;; For more information see (info "(emacs) Directory Variables")
+
+  ((nil
+    . ((eval
+        . (add-to-list 'exec-path
+                       (expand-file-name "~/.cargo/bin")))
+       (lsp-clients-clangd-args . ("--background-index=true"))
+       (eval
+        . (setq lsp-clients-clangd-executable
+                (expand-file-name (concat (projectile-project-root) "/some/local/project/path/bin/clangd"))))))
+   (magit-status-mode
+    . ((eval . (magit-disable-section-inserter 'magit-insert-tags-header)))))
+#+end_src
