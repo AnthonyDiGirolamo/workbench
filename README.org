@@ -11,7 +11,7 @@ running ~make tangle~ or ~./make.awk t~. Running ~make~ or
 This is a ~gawk~ based task runner with some convenience functions for running
 shell commands, downloading archives, and git cloning.
 
-#+begin_src sh
+#+begin_src console
   $ ./make.awk
   t, tangle             tangle all org files
   build                 run test & lint
