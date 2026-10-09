@@ -6,10 +6,28 @@ blocks inside each ~*.org~ file. They and can be put in place by
 running ~make tangle~ or ~./make.awk t~. Running ~make~ or
 ~./make.awk~ with no args displays the help.
 
-* ~make tangleawk~
+* ~./make.awk~
 
-This will run the ~tangle.awk~ script which attempts to emulate emacs
-~org-babel-tangle-file~ but without emacs installed.
+This is a ~gawk~ based task runner with some convenience functions for running
+shell commands, downloading archives, and git cloning.
+
+#+begin_src sh
+  $ ./make.awk
+  t, tangle             tangle all org files
+  build                 run test & lint
+  test                  awk unit tests
+  lint                  awk linting
+  install_emacs31       download, compile and install emacs31
+  install_fish          download, compile and install fish-shell
+  install_lua54         download, compile and install lua 5.4
+#+end_src
+
+It covers most of the use cases I needed in the root ~Makefile~.
+
+* ~./make.awk tangle~
+
+This will run the ~awkpath/tangle.awk~ script which attempts to
+emulate emacs ~org-babel-tangle-file~ (without running emacs).
 
 - It will copy each source block in a given ~*.org~ file into it's
   respective ~:tangle~ destination and create any parent directories.
@@ -22,7 +40,7 @@ This will run the ~tangle.awk~ script which attempts to emulate emacs
 - Any blocks with ~#+begin_src sh :eval yes~ will be executed as
   well. The above elisp checks are supported as well.
 
-#+begin_src text
+#+begin_src console
   $ make tangleawk
   [TANGLE] alacritty.org
     ~/.config/alacritty/alacritty.yml
@@ -77,23 +95,6 @@ This will run the ~tangle.awk~ script which attempts to emulate emacs
     ~/.zshrc.local
 #+end_src
 
-* ~./make.awk~
-
-This is a ~gawk~ based task runner with some convenience functions for running
-shell commands, downloading archives, and git cloning.
-
-#+begin_src sh
-  $ ./make.awk
-  t, tangle             tangle all org files
-  build                 run test & lint
-  test                  awk unit tests
-  lint                  awk linting
-  install_emacs31       download, compile and install emacs31
-  install_fish          download, compile and install fish-shell
-  install_lua54         download, compile and install lua 5.4
-#+end_src
-
-It covers most of the use cases I needed in the root ~Makefile~.
 * ~make tangleorg~
 
 Alternative to ~tangleawk~ this uses emacs to tangle all ~*.org~ files.
