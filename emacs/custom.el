@@ -11,7 +11,7 @@
               evil-commentary general helpful highlight-indent-guides
               hydra ibuffer-vc ivy magit marginalia orderless outli
               posframe projectile rainbow-delimiters shackle
-              solaire-mode swiper vertico vundo wgrep yankpad)))
+              solaire-mode swiper toc-org vertico vundo wgrep yankpad)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

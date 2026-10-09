@@ -84,6 +84,7 @@
     "M-E" 'org-metaup
     "-" 'org-cycle-list-bullet
     "<tab>" 'org-cycle
+    "TAB" 'org-cycle
     "f" 'ace-link-org)
   (:states '(insert)
    :keymaps '(org-mode-map)
@@ -404,7 +405,10 @@ _y_: ?y? year       _q_: quit          _L__l__c_: ?l?
         (insert "</td></tr></tbody></table>")
         (buffer-string))))
   :config
-  (add-to-list 'org-export-filter-src-block-functions 'amd/org-export-html-wrap-src-blocks-in-tables))
+  ;; TODO: this is broken with error:
+  ;;   progn: search failed "</pre>"
+  ;; (add-to-list 'org-export-filter-src-block-functions 'amd/org-export-html-wrap-src-blocks-in-tables)
+  )
 
 (use-package ox-gfm
   :after ox)
@@ -442,6 +446,27 @@ _y_: ?y? year       _q_: quit          _L__l__c_: ?l?
            "* TODO %?\n  SCHEDULED: %t\n  %a\n\n  %i\n")
           ))
   (add-hook 'org-capture-mode-hook 'evil-insert-state))
+
+(use-package org-tempo
+  ;; For inserting structured templates by typing: < s TAB
+  :after org)
+
+;;; org-protocol
+
+(use-package org-protocol
+  :after org)
+
+;;; Extras
+
+(use-package kanban
+  :after org
+  :init
+  (setq kanban-max-column-width 80))
+
+(use-package toc-org
+  :after org
+  :config
+  (add-hook 'org-mode-hook 'toc-org-enable))
 
 (provide 'amd/org)
 ;;; org.el ends here

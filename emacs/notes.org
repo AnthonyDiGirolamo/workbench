@@ -1,0 +1,536 @@
+#+TITLE: Emacs Notes
+#+AUTHOR: Me
+#+EMAIL: ?
+#+OPTIONS: title:t toc:nil H:4 num:nil ^:nil ':nil
+#+OPTIONS: html-style:nil html-preamble:t html-postamble:nil
+#+HTML_DOCTYPE: html5
+#+PROPERTY: UNNUMBERED t
+#+STARTUP: showall
+#+STARTUP: indent
+
+
+* Table of Contents                                            :TOC:noexport:
+- [[#lsp-mode][lsp-mode]]
+- [[#org][org]]
+  - [[#help-docs][Help docs]]
+  - [[#structure-templates][Structure Templates]]
+  - [[#org-capture][org-capture]]
+- [[#elisp][elisp]]
+- [[#emacs-and-git-on-windows][emacs and git on windows]]
+- [[#web-browsing][Web browsing]]
+- [[#edit-with-emacs-and-cvim][edit-with-emacs and cvim]]
+- [[#reading-email-in-emacs---out-of-date][Reading Email in Emacs - out of date]]
+  - [[#mbsync][mbsync]]
+  - [[#mu4e-and-emacs-smtpmail-example-setup][mu4e and emacs smtpmail example setup]]
+  - [[#archived-emacs-elisp-email-setup][archived emacs-elisp email setup]]
+  - [[#smtpmail-authinfogpg][smtpmail ~/.authinfo.gpg]]
+
+* lsp-mode
+
+For lsp-mode to work with rust or clangd it works best if these files
+are available in the project root folder:
+
+- ~rust-project.json~ is available or symlinked
+
+- ~rustc~ and ~rust-analyzer~ are available on the path
+
+- ~compile_commands.json~ is available or symlinked
+
+- Create an empty ~.projectile~ file in the project root.
+
+- Create a ~.dir-locals.el~ with the following (as an example). This
+  sets the local clangd executable to one relative to the project
+  root.
+
+  #+begin_src emacs-lisp :tangle no
+    ;;; Directory Local Variables            -*- no-byte-compile: t -*-
+    ;;; For more information see (info "(emacs) Directory Variables")
+
+    (
+     (nil
+      . ((eval
+          . (add-to-list 'exec-path
+                         (expand-file-name
+                          (concat (projectile-project-root) "/prebuilt/third_party/clang/linux-x64/bin"))))
+         (lsp-clients-clangd-args . ("--background-index=true"))
+         (eval
+          . (setq lsp-clients-clangd-executable (expand-file-name (concat (projectile-project-root) "/prebuilt/third_party/clang/linux-x64/bin/clangd"))))
+         )
+      )
+     (magit-status-mode
+      . ((eval
+          . (magit-disable-section-inserter 'magit-insert-tags-header))
+         )
+      )
+     )
+  #+end_src
+
+* org
+
+** Help docs
+
+- [[info:org#Using header arguments][info:org#Using header arguments]]
+- [[info:org#Specific header arguments][info:org#Specific header arguments]]
+- Clock table info [[info:org#The clock table][info:org#The clock table]]
+- Exporting Options: [[info:org#Export Settings][info:org#Export Settings]]
+
+*** HTML Tag to Org link find replace:
+
+#+begin_src text
+  s/<a href="\([^"]+\)">\([^<]+\)<\/a>/[[\1][\2]]
+#+end_src
+
+** Structure Templates
+
+C-c C-, will insert a template
+
+With ~(use-package org-tempo)~ you can type ~<s~ followed by ~TAB~ to expand a src block.
+
+Supported Types: [[info:org#Structure Templates][org#Structure Templates]] ([[https://orgmode.org/org.html#Structure-Templates-1][The Org Manual - Structure Templates]])
+
+** org-capture
+
+- [[info:org#Capture templates][org#Capture templates]]
+- [[info:org#Template expansion][org#Template expansion]]
+
+*** Org 9 New Style Links
+
+New org-protocol key=value syntax
+
+Org-protocol can now handle query-style parameters such as:
+
+org-protocol://store-link?url=http:%2F%2Flocalhost%2Findex.html&title=The%20title
+org-protocol://capture?template=x&title=Hello&body=World&url=http:%2F%2Fexample.com
+
+Old-style links such as
+
+org-protocol://store-link:/http:%2F%2Flocalhost%2Findex.html/The%20title
+continue to be supported.
+
+If you have defined your own handler functions for org-protocol-protocol-alist,
+change them to accept either a property list (for new-style links) or a string
+(for old-style links). Use org-protocol-parse-parameters to convert old-style
+links into property lists.
+
+*** Chrome bookmarks
+
+**** org-capture
+
+#+begin_src fundamental :tangle no
+  javascript:location.href = 'org-protocol://capture?url=' + encodeURIComponent(location.href) + '&title=' + encodeURIComponent(document.title) + '&body=' + encodeURIComponent(window.getSelection());
+#+end_src
+
+**** org-store-link
+
+#+begin_src fundamental :tangle no
+  javascript:location.href = 'org-protocol://store-link?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);
+#+end_src
+
+**** =emacs.desktop=
+
+#+NAME: homedir
+#+begin_src emacs-lisp :cache yes
+  (expand-file-name "~")
+#+end_src
+
+#+begin_src fundamental :tangle (if (eq system-type 'gnu/linux) "~/.local/share/applications/emacs.desktop" "no") :noweb tangle
+  [Desktop Entry]
+  Name=Emacs
+  Exec=<<homedir()>>/apps/emacs/bin/emacs
+  Type=Application
+  Terminal=false
+  Categories=System;
+  Icon=emacs.svg
+  Comment=
+#+end_src
+
+**** =org-protocol.desktop=
+
+#+begin_src fundamental :tangle (if (eq system-type 'gnu/linux) "~/.local/share/applications/org-protocol.desktop" "no")
+  [Desktop Entry]
+  Name=org-protocol
+  Exec=<<homedir()>>/apps/emacs/bin/emacsclient -n %u
+  Type=Application
+  Terminal=false
+  Categories=System;
+  MimeType=x-scheme-handler/org-protocol
+  Icon=emacs.svg
+  Comment=
+#+end_src
+
+**** xdg-mime
+
+#+begin_src sh :tangle no
+  xdg-mime default org-protocol.desktop x-scheme-handler/org-protocol
+#+end_src
+
+*** Mac OS Setup
+
+[[http://orgmode.org/worg/org-contrib/org-protocol.html#orgheadline6][org-protocol.el – Mac OS X setup]] doesn't work anymore according to [[https://github.com/neil-smithline-elisp/EmacsClient.app/issues/3][Issue #3 · neil-smithline-elisp/EmacsClient.app]].
+
+**** Step 1. Create an application
+
+- Launch the Script Editor application and create a new document
+- Copy-and-paste the following code into the new document
+- Change "/usr/local/bin/emacsclient" to path to =emacsclient= on your system
+- Save it in /Application/ (not the default /Script/) File Format as
+  =org-protocol.app=
+
+#+begin_src fundamental :tangle no
+  on open location this_URL
+    do shell script "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient \"" & this_URL & "\""
+  end open location
+#+end_src
+
+**** Step 2. Configure the application
+
+- Navigate to the application (i.e., =org-protocol.app=) in the Finder, then
+  right-click on it and select =Show Package Contents=. Now go into the
+  =Contents= folder and open =Info.plist=
+- Add the following code to the file, making sure to keep all existing
+  key/string pairs intact:
+
+#+begin_src fundamental :tangle no
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>org-protocol handler</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>org-protocol</string>
+      </array>
+    </dict>
+  </array>
+#+end_src
+
+**** If Emacs doesn't activate:
+
+#+begin_src fundamental :tangle no
+  on open location this_URL
+    do shell script "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient \"" & this_URL & "\" && open -a Emacs"
+  end open location
+#+end_src
+
+* elisp
+
+- [[info:elisp#Prefix Command Arguments][elisp#Prefix Command Arguments]]
+- [[info:cl#Loop Facility][cl#Loop Facility]]
+
+* emacs and git on windows
+
+Installing emacs and git without using cygwin
+
+- https://sourceforge.net/projects/emacsbinw64/
+- https://git-scm.com/download/win
+- http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html (optional)
+
+Download above portable versions and extract to
+
+- =C:\Users\anthony\emacs=
+- =C:\Users\anthony\PortableGit=
+- =C:\Users\anthony\PortableGit\cmd= (plink goes here)
+
+Launch emacs with this bat file.
+
+#+begin_src fundamental :tangle (if (eq system-type 'windows-nt) "C:/Users/anthony/runemacs.bat" "no")
+  SET GIT=PortableGit
+  SET GIT_HOME=%CD%\%GIT%
+  SET GIT_ASKPASS=git-gui--askpass
+  SET SSH_ASKPASS=git-gui--askpass
+  SET PATH=%GIT_HOME%\bin;%GIT_HOME%\mingw64\bin;%GIT_HOME%\cmd;%GIT_HOME%\usr\bin;%GIT_HOME%\mingw64\libexec\git-core;%PATH%
+  SET HOME=.\
+  emacs\bin\runemacs.exe %*
+#+end_src
+
+More info here https://github.com/magit/magit/wiki/Pushing-with-Magit-from-Windows
+
+With the above this isn't necessary.
+
+#+begin_src emacs-lisp :tangle no
+  (when (eq system-type 'windows-nt)
+    (add-to-list 'exec-path "C:\\Users\\anthony\\PortableGit\\bin"))
+#+end_src
+
+* Web browsing
+
+- [[info:eww#Top][info:eww#Top]]
+
+* edit-with-emacs and cvim
+
+**Note**: This does not function on latest Chrome.
+
+Chrome browser extensions:
+- [[https://chrome.google.com/webstore/detail/edit-with-emacs/ljobjlafonikaiipfkggjbhkghgicgoh][Edit with Emacs]]
+- [[https://chrome.google.com/webstore/detail/cvim/ihlenndgcmojhcghmfjfneahoeklbjjh?hl=en][cvim]]
+
+=amd/parse-json= will make this plugin work with [[https://chrome.google.com/webstore/detail/cvim/ihlenndgcmojhcghmfjfneahoeklbjjh?hl=en][cvim]].
+cvim sends a json payload to the edit server instead of the raw text.
+
+#+begin_src emacs-lisp
+  (use-package edit-server
+    :commands (edit-server-start)
+    :init
+    (setq edit-server-port 3000)
+    (defun amd/parse-json ()
+      (interactive)
+      (goto-char (point-min))
+      (let ((parsed-json (json-read)))
+        (erase-buffer)
+        (insert (alist-get 'data parsed-json))))
+    (add-hook 'edit-server-edit-mode-hook #'amd/parse-json))
+#+end_src
+
+* Reading Email in Emacs - out of date
+
+#+begin_src fundamental :noweb-ref email-address
+  anthony@example.com
+#+end_src
+
+** mbsync
+
+#+begin_src sh :results silent
+  mkdir -p ~/Mail/INBOX
+#+end_src
+
+#+begin_src conf :tangle ~/.mbsyncrc :noweb yes
+  IMAPAccount gmail
+  Host imap.gmail.com
+  User <<email-address>>
+  PassCmd "gpg2 --use-agent --quiet -d ~/.authinfo.gpg | cut -d ' ' -f 6"
+  AuthMechs LOGIN
+  SSLType IMAPS
+  # SSLVersions SSLv3
+  CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+  IMAPStore gmail-remote
+  Account gmail
+
+  MaildirStore gmail-local
+  Path ~/Mail/
+  Inbox ~/Mail/INBOX
+
+  Channel gmail-inbox
+  Master :gmail-remote:
+  Slave :gmail-local:
+  Patterns "INBOX"
+  Create Both
+  Expunge Both
+  SyncState *
+
+  Channel gmail-trash
+  Master :gmail-remote:"[Gmail]/Trash"
+  Slave :gmail-local:"[Gmail].Trash"
+  Create Both
+  Expunge Both
+  SyncState *
+
+  Channel gmail-sent
+  Master :gmail-remote:"[Gmail]/Sent Mail"
+  Slave :gmail-local:"[Gmail].Sent Mail"
+  Create Both
+  Expunge Both
+  SyncState *
+
+  Channel gmail-all
+  Master :gmail-remote:"[Gmail]/All Mail"
+  Slave :gmail-local:"[Gmail].All Mail"
+  Create Both
+  Expunge Both
+  SyncState *
+
+  Channel gmail-starred
+  Master :gmail-remote:"[Gmail]/Starred"
+  Slave :gmail-local:"[Gmail].Starred"
+  Create Both
+  Expunge Both
+  SyncState *
+
+  Group gmail
+  Channel gmail-inbox
+  Channel gmail-sent
+  Channel gmail-trash
+  Channel gmail-all
+  Channel gmail-starred
+#+end_src
+
+** mu4e and emacs smtpmail example setup
+
+#+begin_src emacs-lisp :tangle "~/.config/emacs/amd/email-settings.el" :noweb yes
+  (setq mu4e-user-mail-address-list '("<<email-address>>"))
+  (setq mu4e-reply-to-address "<<email-address>>"
+        user-mail-address "<<email-address>>"
+        user-full-name  "Anthony DiGirolamo")
+  (setq mu4e-compose-signature
+        (concat
+         "Anthony DiGirolamo\n"
+         "<<email-address>>"))
+
+  (setq message-send-mail-function    'smtpmail-send-it
+        smtpmail-stream-type          'starttls
+        ;; smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
+        ;; smtpmail-smtp-user            "<<email-address>>"
+        smtpmail-default-smtp-server  "smtp.gmail.com"
+        smtpmail-smtp-server          "smtp.gmail.com"
+        smtpmail-smtp-service         587
+        ;; smtpmail-local-domain         ""
+        smtpmail-debug-info t
+        smtpmail-debug-verb t)
+
+  (setq gnutls-algorithm-priority "NORMAL:%COMPAT")
+
+  (setq
+   mu4e-maildir       "~/Mail"
+   mu4e-sent-folder   "/[Gmail].Sent Mail"
+   mu4e-drafts-folder "/[Gmail].Drafts"
+   mu4e-trash-folder  "/[Gmail].Trash"
+   mu4e-refile-folder "/[Gmail].All Mail")
+  (setq mu4e-maildir-shortcuts
+        '( ("/INBOX"            . ?i)
+           ("/[Gmail].All Mail" . ?a)
+           ("/[Gmail].Sent Mail" . ?s)))
+
+  (setq mu4e-compose-complete-ignore-address-regexp "no-?reply\|via RT")
+#+end_src
+
+** archived emacs-elisp email setup
+
+#+begin_src emacs-lisp :tangle no
+  (eval-and-compile
+    (defun amd/mu4e-load-path ()
+      (list "~/apps/mu/share/emacs/site-lisp/mu4e"
+            "~/homebrew/share/emacs/site-lisp/mu4e"
+            "/usr/local/share/emacs/site-lisp/mu4e")))
+
+  (use-package mu4e
+    :commands (mu4e)
+    :load-path (lambda () (amd/mu4e-load-path))
+    :init
+    (let ((mbsync-bin (cl-find-if 'file-exists-p (list "~/apps/isync/bin/mbsync"
+                                                       "~/homebrew/bin/mbsync"
+                                                       "/usr/local/bin/mbsync"))))
+      (when mbsync-bin
+        (setq mu4e-get-mail-command (concat mbsync-bin " -V gmail"))))
+
+    ;; (setq mu4e-update-interval 120)
+    (setq mu4e-change-filenames-when-moving t) ;; needed for mbsync
+
+    (setq mu4e-confirm-quit nil)
+    (let ((mu4e-bin (cl-find-if 'file-exists-p (list "~/apps/mu/bin/mu"
+                                                     "~/homebrew/bin/mu"
+                                                     "/usr/local/bin/mu"))))
+      (when mu4e-bin
+        (setq mu4e-mu-binary mu4e-bin)))
+    :config
+    ;; (add-to-list 'evil-motion-state-modes 'mu4e-view-mode)
+
+    ;; when refiling from message view and hitting x
+    ;; the focus is on the header window instead of the message
+    (advice-add 'mu4e-mark-execute-all :after #'mu4e-select-other-view)
+
+    ;; (mapc (lambda (current-mode-map-name)
+    ;;         (define-key current-mode-map-name amd/leader-key 'hydra-leader-menu/body))
+    ;;       '(mu4e-headers-mode-map
+    ;;         mu4e-view-mode-map
+    ;;         mu4e-main-mode-map))
+
+    (define-key mu4e-headers-mode-map (kbd "e") 'mu4e-headers-prev)
+    (define-key mu4e-view-mode-map (kbd "n") 'next-line)
+    (define-key mu4e-view-mode-map (kbd "e") 'previous-line)
+    (define-key mu4e-view-mode-map (kbd "C-e") 'mu4e-view-headers-prev)
+    (define-key mu4e-view-mode-map (kbd "C-n") 'mu4e-view-headers-next)
+
+    (define-key mu4e-view-mode-map (kbd "C-d") 'mu4e-view-scroll-up-or-next)
+    (define-key mu4e-view-mode-map (kbd "C-u") 'scroll-down-command)
+
+    (setq mu4e-use-fancy-chars nil)
+    (setq mu4e-attachment-dir "~/Download")
+    (setq mu4e-view-show-images t)
+    (setq mu4e-view-show-addresses t)
+    (setq mu4e-view-scroll-to-next nil)
+
+    (when (fboundp 'imagemagick-register-types)
+      (imagemagick-register-types))
+
+    (load "~/.emacs.d/email-settings.el")
+
+    (add-to-list 'mu4e-bookmarks '("flag:flagged" "Flagged" ?f))
+
+    (defun amd/mu4e-open-docx-attachment-in-emacs (msg attachnum)
+      "Count the number of lines in an attachment."
+      (mu4e-view-pipe-attachment msg attachnum "cat > ~/Downloads/attachment.docx && pandoc -f docx -t org ~/Downloads/attachment.docx"))
+
+    (defun amd/mu4e-open-xlsx-attachment-in-emacs (msg attachnum)
+      "Count the number of lines in an attachment."
+      (mu4e-view-pipe-attachment msg attachnum "cat > ~/Downloads/attachment.xlsx && xlsx2csv ~/Downloads/attachment.xlsx"))
+
+    ;; defining 'n' as the shortcut
+    (add-to-list 'mu4e-view-attachment-actions
+                 '("cview-docx" . amd/mu4e-open-docx-attachment-in-emacs) t)
+    (add-to-list 'mu4e-view-attachment-actions
+                 '("xview-xlsx" . amd/mu4e-open-xlsx-attachment-in-emacs) t)
+
+    (defun amd/mu4e-view-org-message-in-emacs (msg)
+      "View a pandoc converted version of the message in emacs."
+      ;; (mu4e-view-pipe "cat > ~/Downloads/message.html && pandoc -f html -t org ~/Downloads/message.html"))
+      (mu4e-view-pipe "pandoc -f html -t org"))
+
+    (add-to-list 'mu4e-view-actions
+                 '("emacs org view" . amd/mu4e-view-org-message-in-emacs) t)
+    (add-to-list 'mu4e-view-actions
+                 '("browser view" . mu4e-action-view-in-browser) t)
+
+    )
+
+  ;; make sure eww is loaded before the below
+
+  (use-package mu4e-contrib
+    :commands (mu4e)
+    :load-path (lambda () (amd/mu4e-load-path))
+    :init
+    (setq shr-external-browser 'browse-url-generic) ;; this must be a function, not an external command
+    (setq mu4e-html2text-command 'mu4e-shr2text) ;; same as eww
+    ;; (setq shr-color-visible-luminance-min 1) ;; for dark theme?
+    ;; (setq mu4e-html2text-command "w3m -T text/html")
+    ;; (setq mu4e-html2text-command "pandoc -f html -t org")
+    :config
+    (defun amd/mu4e-open-link-in-browser ()
+      "Open a visible eww link in the web browser."
+      (interactive)
+      (let ((res (avy-with ace-link-eww
+                   (avy--process
+                    (mapcar #'cdr (ace-link--eww-collect))
+                    #'avy--overlay-post))))
+        (when res
+          (goto-char (1+ res))
+          (if (eww-follow-link t)
+              ;; eww-follow-link retuns a "No link at point"
+              ;; string when it cant open a link and nil if successful
+              (org-open-at-point)))))
+
+    ;; (add-hook 'mu4e-view-mode-hook
+    ;;           (lambda()
+    ;;             (local-set-key (kbd "f") 'amd/mu4e-open-link-in-browser)))
+    (define-key mu4e-view-mode-map (kbd "f") 'amd/mu4e-open-link-in-browser)
+    )
+
+  (use-package org-mu4e
+    :commands (mu4e)
+    :init
+    (setq org-mu4e-link-query-in-headers-mode nil))
+
+  (use-package smtpmail
+    :config
+    (setq smtpmail-queue-mail t)
+    (setq smtpmail-queue-dir  "~/Mail/queue/cur")
+
+    (setq message-kill-buffer-on-exit t)
+    )
+#+end_src
+
+** smtpmail ~/.authinfo.gpg
+
+#+begin_src conf :tangle no :noweb yes
+  machine smtp.gmail.com login <<email-address>> password p455w0rd
+#+end_src
+
