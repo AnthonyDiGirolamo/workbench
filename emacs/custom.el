@@ -6,11 +6,11 @@
  '(custom-safe-themes t)
  '(package-selected-packages
    '(ace-link ace-window amx avy catppuccin-theme color-identifiers-mode
-              consult counsel dired-hacks-utils dired-subtree
+              consult corfu counsel dired-hacks-utils dired-subtree
               doom-modeline doom-themes embark embark-consult evil
               evil-commentary general helpful highlight-indent-guides
               hydra ibuffer-vc ivy magit marginalia orderless outli
-              posframe projectile rainbow-delimiters shackle
+              posframe powerline projectile rainbow-delimiters shackle
               solaire-mode swiper toc-org vertico vundo wgrep yankpad)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

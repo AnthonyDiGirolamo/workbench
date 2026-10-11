@@ -15,6 +15,7 @@
   (solaire-global-mode +1))
 
 (use-package doom-modeline
+  :disabled
   :custom
   ;; TODO: change evil-*-state-tags to the full NAME
   (doom-modeline-bar-width 8) ;; fringe width/2
@@ -25,6 +26,35 @@
   (doom-modeline-height 1)
   :init
   :hook (after-init . doom-modeline-mode))
+
+(use-package airline-themes
+  ;; :disabled
+  :init
+  (setq powerline-default-separator 'utf-8)
+  ;; (setq powerline-utf-8-separator-left  #x2572
+  ;;       powerline-utf-8-separator-right #x2572)
+  (setq powerline-utf-8-separator-left  #x20
+        powerline-utf-8-separator-right #x20)
+  ;; (setq powerline-utf-8-separator-left  #xe0b0
+  ;;       powerline-utf-8-separator-right #xe0b2)
+
+  ;; (setq powerline-default-separator nil)
+  (setq airline-hide-state-on-inactive-buffers t)
+  (setq airline-hide-vc-branch-on-inactive-buffers t)
+  (setq airline-hide-eyebrowse-on-inactive-buffers t)
+  ;; (setq airline-display-directory 'airline-directory-full)
+  (setq airline-display-directory 'airline-directory-shortened)
+  ;; (setq airline-display-directory nil)
+  (setq airline-eshell-colors t)
+  ;; (setq airline-utf-glyph-separator-left      #x20)
+  ;; (setq airline-utf-glyph-separator-right     #x20)
+  ;; (setq airline-utf-glyph-subseparator-left   #x20)
+  ;; (setq airline-utf-glyph-subseparator-right  #x20)
+  ;; (setq airline-utf-glyph-branch              #xe0a0)
+  ;; (setq airline-utf-glyph-readonly            #xe0a2)
+  ;; (setq airline-utf-glyph-linenumber          #xe0a1)
+  (setq airline-shortened-directory-length 16))
+
 
 ;; (use-package leuven-theme
 ;;   :custom
@@ -255,7 +285,8 @@
 
 ;;; Load Theme:
 (amd/disable-loaded-themes)
-(load-theme 'doom-tokyo-night)
+;; (load-theme 'doom-tokyo-night)
+(amd/catppuccin-theme)
 
 
 

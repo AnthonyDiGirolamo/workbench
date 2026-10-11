@@ -77,7 +77,7 @@
 ;;   (load amd/local-settings-file))
 
 ;; Add use-package config files to the load path
-(dolist (dir '("config"))
+(dolist (dir '("config" "airline-themes"))
   (push (expand-file-name dir user-emacs-directory) load-path))
 
 (require 'amd/emacs)

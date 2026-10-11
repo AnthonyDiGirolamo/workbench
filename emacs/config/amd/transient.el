@@ -291,7 +291,8 @@
       ("V" "open ~/workbench"            (lambda () (interactive) (find-file "~/workbench/")))]
 
      ["Check"
-      "TODO flycheck"
+      ("fc" "flymake"                  flymake-show-buffer-diagnostics)
+      ("fn" "flycheck next error"      flymake-goto-next-error :transient t)
       ;; ("fc" "flycheck"                 flycheck-list-errors)
       ;; ("fn" "flycheck next error"      flycheck-next-error)
       ;; ("fp" "flycheck prev error"      flycheck-previous-error)
