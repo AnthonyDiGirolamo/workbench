@@ -46,6 +46,22 @@
      )
     )
 
+  (defun amd/tab-bar-string-for-transient ()
+    "Return current tabs as a formatted string."
+    (cl-loop
+     for tab being the elements of (funcall tab-bar-tabs-function)
+     using (index i)
+     with current-index = (tab-bar--current-tab-index)
+     concat
+     (let ((tab-name (alist-get 'name tab)))
+       (if (eq i current-index)
+           (propertize (format " %s " tab-name) 'face 'tab-bar-tab)
+         (propertize (format " %s " tab-name) 'face 'tab-bar-tab-inactive)))
+     ;; into current-tab-list
+     ;; finally return (format "| %s |" current-tab-list)
+     )
+    )
+
   (defhydra hydra-tab-bar (:color red :columns 5)
     "
   %s(amd/tab-bar-string-for-hydra)"

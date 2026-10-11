@@ -311,6 +311,7 @@ See `eshell-prompt-regexp'."
   (:states '(motion)
    :keymaps '(compilation-mode-map)
    "M-n" 'tmux-window-navigation/move-down
+   "gf" 'find-file-at-point
    "gg" 'evil-goto-first-line
    "G" 'evil-goto-line)
 

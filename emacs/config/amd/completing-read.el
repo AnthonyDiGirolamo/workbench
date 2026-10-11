@@ -8,6 +8,8 @@
   :config
   (amx-mode))
 
+;;; minibuffer (built-in emacs settings)
+
 (use-package minibuffer
   :ensure nil
   :config
@@ -56,12 +58,14 @@
   (setq completion-eager-display t)
   (setq completion-eager-update t))
 
+;;; orderless
 
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
+;;; consult
 
 (use-package consult
   ;; :disabled
@@ -188,13 +192,19 @@
   ;; Both < and C-+ work reasonably well. ;; (kbd "C-+")
   (setq consult-narrow-key "<"))
 
+;;; embark
+
 (use-package embark
   ;; :disabled
   :bind
-  (("C-t" . embark-act)         ;; pick some comfortable binding
+  (("C-t" . embark-act)
    ("C-c C-o" . embark-export)
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h C-k" . (lambda () (interactive) (embark-bindings t)))) ;; alternative for `describe-bindings'
+   ("C-;" . embark-dwim)
+   ("C-h C-k" . (lambda () (interactive) (embark-bindings t))))
+  (:map evil-normal-state-map
+        ("C-t" . embark-act)
+        ("C-;" . embark-dwim))
+
 
   :init
   ;; Optionally replace the key help with a completing-read interface
@@ -211,6 +221,8 @@
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+;;; vertico
 
 (use-package vertico
   ;; :disabled
@@ -239,6 +251,8 @@
   ;; enabled right away. Note that this forces loading the package.
   (vertico-mode))
 
+;;; marginalia
+
 (use-package marginalia
   ;; :disabled
   :bind (:map minibuffer-local-map
@@ -248,6 +262,8 @@
   ;; Must be in the :init section of use-package such that the mode gets
   ;; enabled right away. Note that this forces loading the package.
   (marginalia-mode))
+
+;;; ivy
 
 (use-package ivy
   :custom
@@ -316,6 +332,8 @@
    '(("c"
       (lambda (arg) (calc-convert-units nil (cdr arg)))
       "convert"))))
+
+;;; counsel
 
 (use-package counsel
   ;; :disabled

@@ -95,6 +95,7 @@
    ;; "#"   'evil-ex-search-word-forward
    "g *" 'evil-ex-search-unbounded-word-backward
    "g #" 'evil-ex-search-unbounded-word-forward)
+
   (:states '(normal)
    ;; "-" 'amd/dired-at-buffer-location
    "C-s" 'save-buffer
@@ -107,12 +108,14 @@
    "C-l" (lambda() (interactive) (evil-ex-nohighlight) (redraw-display))
    "C-e" 'move-line-up
    "C-n" 'move-line-down)
+
   (:states '(visual)
    "C-e" 'evil-move-lines-up
    "C-n" 'evil-move-lines-down)
   ;; (:states '(insert motion visual emacs)
   ;;  :prefix "C-w"
   ;;  "" nil)
+
   (:states '(insert)
    "C-s" (lambda() (interactive) (save-buffer) (evil-normal-state))
    "C-y" 'counsel-yank-pop
@@ -124,9 +127,11 @@
    "C-w o" 'delete-other-windows
    "C-b" 'yankpad-insert ;; Was evil-scroll-page-up
    amd/leader-key-insert 'amd/transient-leader-menu)
+
   (:states '(motion visual)
    "RET" 'evil-ex ;; Enter opens : prompt
    ";" 'evil-ex)  ;; semicolon also enters : prompt
+
   (:states '(motion visual emacs)
    "C-w m" 'evil-window-set-height
    "M-t" 'consult-buffer
@@ -135,6 +140,7 @@
    "M-d" (lambda() (interactive) (dired-other-window (projectile-project-root)))
    "M-D" (lambda() (interactive) (dired-jump t))
    amd/leader-key 'amd/transient-leader-menu)
+
   (:states '(motion emacs)
    "C-M-c" 'amd/split-compilation
    "C-w N" 'evil-window-move-very-bottom
@@ -143,9 +149,6 @@
    "C-w L" 'evil-window-move-far-right
    "C-w u" 'winner-undo
    "C-w d" 'winner-redo)
-  (:states '(motion)
-   :keymaps 'compilation-mode-map
-   "gf" 'find-file-at-point)
 
   :config
   ;; (add-hook 'evil-local-mode-hook 'turn-on-undo-tree-mode)
