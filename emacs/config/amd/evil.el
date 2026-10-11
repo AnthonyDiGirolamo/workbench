@@ -118,7 +118,8 @@
 
   (:states '(insert)
    "C-s" (lambda() (interactive) (save-buffer) (evil-normal-state))
-   "C-y" 'counsel-yank-pop
+   ;; "C-y" 'counsel-yank-pop
+   "C-y" 'consult-yank-pop
    "M-t" 'consult-buffer
    "M-b" 'ibuffer
    "C-x C-l" 'evil-complete-previous-line

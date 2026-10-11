@@ -6,13 +6,14 @@
  '(custom-safe-themes t)
  '(package-selected-packages
    '(ace-link ace-window amx avy catppuccin-theme cmake-mode
-              color-identifiers-mode consult corfu counsel diminish
-              dired-hacks-utils dired-subtree doom-modeline
-              doom-themes embark embark-consult evil evil-commentary
-              general helpful highlight-indent-guides hydra ibuffer-vc
-              ivy magit marginalia orderless outli posframe powerline
-              projectile rainbow-delimiters rust-mode shackle
-              solaire-mode swiper toc-org vertico vundo wgrep yankpad))
+              color-identifiers-mode consult consult-eglot corfu
+              counsel diminish dired-hacks-utils dired-subtree
+              doom-modeline doom-themes embark embark-consult evil
+              evil-commentary fish-mode general helpful
+              highlight-indent-guides hydra ibuffer-vc ivy magit
+              marginalia orderless outli posframe powerline projectile
+              rainbow-delimiters rust-mode shackle solaire-mode swiper
+              toc-org vertico vundo wgrep yankpad))
  '(safe-local-variable-values
    '((lsp-clients-clangd-args "--background-index=true")
      (eval add-to-list 'exec-path (expand-file-name "~/.cargo/bin")))))

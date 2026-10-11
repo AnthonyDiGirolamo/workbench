@@ -5,6 +5,9 @@
 ;;; Code:
 
 (use-package amx
+  :demand
+  ;; :bind
+  ;; (("M-x" . amx))
   :config
   (amx-mode))
 
@@ -70,6 +73,7 @@
 (use-package consult
   ;; :disabled
   ;; Replace bindings. Lazily loaded due by `use-package'.
+
   :bind
   ;; (;; C-c bindings (mode-specific-map)
   ;;  ("C-c h" . consult-history)

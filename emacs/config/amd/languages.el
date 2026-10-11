@@ -42,10 +42,12 @@
    "E" 'outline-previous-heading
   ))
 
+(use-package outline
+  :diminish outline-minor-mode)
+
 (use-package outli
   :config
-  (add-hook 'emacs-lisp-mode-hook 'outli-mode)
-  )
+  (add-hook 'emacs-lisp-mode-hook 'outli-mode))
 
 (use-package lispy
   :disabled ;; TODO
@@ -86,6 +88,8 @@
 (use-package lua-mode
   :custom
   (lua-indent-level 2))
+
+(use-package pico8)
 
 ;; Markdown mode
 (use-package markdown-mode

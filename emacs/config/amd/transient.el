@@ -336,7 +336,8 @@
       ("DL" "desktop-read"             desktop-read)
       ("zz" "server-edit done"         server-edit)
       ("WC" "word-count"               count-words)
-      ("xx"  "M-x"                     counsel-M-x)]])
+      ("xx"  "M-x"                     counsel-M-x)
+      ("xm"  "M-x"                     consult-mode-command)]])
 
 ;;; Appearance Toggles
   (transient-define-prefix amd/transient-toggles-menu ()

@@ -11,20 +11,19 @@
 ;; Loading done, restore gc-cons-threshold
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold 16000000
+            (setq gc-cons-threshold (* 16 1024 1024)
                   gc-cons-percentage 0.1)))
 
+;; NOTE: Using this seems to make M-x lag
 ;; Disable garbage collection when the minibuffer is active
-(defun my-minibuffer-setup-hook ()
-  (setq gc-cons-threshold 1024000000
-        gc-cons-percentage 0.5))
-
-(defun my-minibuffer-exit-hook ()
-  (setq gc-cons-threshold 16000000
-        gc-cons-percentage 0.1))
-
-(add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
-(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+;; (defun my-minibuffer-setup-hook ()
+;;   (setq gc-cons-threshold 1024000000
+;;         gc-cons-percentage 0.5))
+;; (defun my-minibuffer-exit-hook ()
+;;   (setq gc-cons-threshold (* 16 1024 1024)
+;;         gc-cons-percentage 0.1))
+;; (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+;; (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 
 ;; Don’t compact font caches during GC.
 (setq inhibit-compacting-font-caches t)
