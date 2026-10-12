@@ -14,21 +14,53 @@
   ;; (solaire-mode-swap-faces-maybe)
   (solaire-global-mode +1))
 
+;;; modeline
+
+;;;; doom-modeline
+
 (use-package doom-modeline
-  :disabled
   :custom
-  ;; TODO: change evil-*-state-tags to the full NAME
   (doom-modeline-bar-width 8) ;; fringe width/2
-  (doom-modeline-icon nil)
+  (setq doom-modeline-unicode-fallback t) ;; use unicode / emoji
   ;; TODO: force height to be (frame-char-height)
   ;;   This seems to always multiply
   ;;   (if doom-modeline-icon 1.68 1.25) by the (frame-char-height)
   (doom-modeline-height 1)
   :init
-  :hook (after-init . doom-modeline-mode))
+  :hook
+  (after-init . doom-modeline-mode)
+  :config
+  (if (display-graphic-p)
+      ;; use nerd-icons in gui mode
+      (setq doom-modeline-icon t)
+    ;; no icons in terminal mode
+    (setq doom-modeline-icon nil
+          ;; use unicode / emoji as fallback
+          doom-modeline-unicode-fallback nil))
+
+  (unless doom-modeline-unicode-fallback
+    ;; use reverse video for evil state for higher contrast
+    (custom-set-faces
+     '(doom-modeline-evil-emacs-state
+       ((t (:inherit (doom-modeline font-lock-builtin-face) :inverse-video t))) t)
+     '(doom-modeline-evil-insert-state
+       ((t (:inherit (doom-modeline font-lock-keyword-face) :inverse-video t))) t)
+     '(doom-modeline-evil-motion-state
+       ((t (:inherit (doom-modeline font-lock-doc-face) :inverse-video t :slant normal))) t)
+     '(doom-modeline-evil-normal-state
+       ((t (:inherit doom-modeline-info :inverse-video t))) t)
+     '(doom-modeline-evil-operator-state
+       ((t (:inherit (doom-modeline mode-line) :inverse-video t))) t)
+     '(doom-modeline-evil-visual-state
+       ((t (:inherit doom-modeline-warning :inverse-video t))) t)
+     '(doom-modeline-evil-replace-state
+       ((t (:inherit doom-modeline-urgent :inverse-video t))) t)))
+  )
+
+;;;; airline-themes
 
 (use-package airline-themes
-  ;; :disabled
+  :disabled
   :init
   (setq powerline-default-separator 'utf-8)
   ;; (setq powerline-utf-8-separator-left  #x2572
@@ -55,6 +87,7 @@
   ;; (setq airline-utf-glyph-linenumber          #xe0a1)
   (setq airline-shortened-directory-length 16))
 
+;;; leuven
 
 ;; (use-package leuven-theme
 ;;   :custom
@@ -119,6 +152,8 @@
    '(avy-lead-face ((t (:foreground "#ffaf00"))) t)
    '(avy-lead-face-0 ((t (:foreground "#5fd7ff"))) t)
    '(avy-background-face ((t (:background "#eeeeee" :foreground "#a2a2a2"))) t)))
+
+;;; doom-themes
 
 (use-package doom-themes
   :custom
@@ -226,6 +261,8 @@
      ))
   )
 
+;;; catppuccin-theme
+
 (use-package catppuccin-theme
   :custom
   ;; Dark
@@ -259,6 +296,8 @@
   (when (featurep 'airline-themes)
     (load-theme 'airline-catppuccin_frappe t)))
 
+;;; modus themes
+
 (defun amd/modus-light-theme ()
   "load modus-operandi and override some colors"
   (interactive)
@@ -283,12 +322,11 @@
   (when (featurep 'airline-themes)
     (load-theme 'airline-ouo t)))
 
-;;; Load Theme:
+;;; Load Theme
+
 (amd/disable-loaded-themes)
 ;; (load-theme 'doom-tokyo-night)
 (amd/catppuccin-theme)
-
-
 
 (provide 'amd/themes)
 ;;; themes.el ends here

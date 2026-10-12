@@ -155,6 +155,14 @@
   ;; (add-hook 'evil-local-mode-hook 'turn-on-undo-tree-mode)
   (evil-mode 1)
 
+  (setopt evil-emacs-state-tag " EMACS ")
+  (setopt evil-normal-state-tag " NORMAL ")
+  (setopt evil-motion-state-tag " MOTION ")
+  (setopt evil-insert-state-tag " INSERT ")
+  (setopt evil-visual-state-tag " VISUAL ")
+  (setopt evil-replace-state-tag " REPLACE ")
+  (setopt evil-operator-state-tag " OPERATOR ")
+
   ;; (defun amd/get-inner-symbol ()
   ;;   (interactive)
   ;;   ;; (message "%s" (evil-inner-symbol 1)

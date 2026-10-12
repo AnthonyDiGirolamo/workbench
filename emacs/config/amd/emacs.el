@@ -179,6 +179,29 @@
   ;; (setq read-extended-command-predicate
   ;;       #'command-completion-default-include-p)
 
+  ;; Default modeline with repeated dashes removed in terminal mode.
+  (setq
+   mode-line-format
+   '("%e"
+     " " ;; mode-line-front-space
+     mode-line-mule-info
+     mode-line-client
+     mode-line-modified
+     mode-line-remote
+     mode-line-window-dedicated
+     mode-line-frame-identification
+     mode-line-buffer-identification
+     "   "
+     mode-line-position
+     evil-mode-line-tag
+     (project-mode-line project-mode-line-format)
+     (vc-mode vc-mode)
+     "  "
+     mode-line-modes
+     mode-line-misc-info
+     ;; mode-line-end-spaces
+     ))
+
   :custom
   ;; START vertico recommended config
   ;; Enable context menu. `vertico-multiform-mode' adds a menu in the minibuffer
