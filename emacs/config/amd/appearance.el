@@ -109,7 +109,9 @@
 (use-package display-line-numbers
   :custom
   (display-line-numbers-type t) ;; t=absolute 'relative 'visual
-  (display-line-numbers-current-absolute t))
+  (display-line-numbers-current-absolute t)
+  :config
+  (amd/add-appearance-mode 'display-line-numbers-mode))
 
 (use-package color-identifiers-mode ;; the package is actually called "color-identifiers-mode" with -mode at the end
   :commands (color-identifiers-mode)
