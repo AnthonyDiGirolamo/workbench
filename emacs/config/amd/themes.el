@@ -38,7 +38,7 @@
           ;; use unicode / emoji as fallback
           doom-modeline-unicode-fallback nil))
 
-  (unless doom-modeline-unicode-fallback
+  (unless doom-modeline-icon
     ;; use reverse video for evil state for higher contrast
     (custom-set-faces
      '(doom-modeline-evil-emacs-state

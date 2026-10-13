@@ -77,6 +77,7 @@
    ;; swiper
    ;; "/" 'swiper
    "C-/" 'swiper
+   "C-_" 'swiper  ;; C-/ registers as C-_ in the terminal
    ;; search using isearch
    ;; "/" 'evil-search-forward
    ;; "k" 'evil-search-next

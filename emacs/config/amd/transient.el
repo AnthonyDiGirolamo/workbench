@@ -290,11 +290,10 @@
      ["Edit"
       ("a" "align"                     amd/transient-align-menu)
       ("G"  "search git grep"          counsel-git-grep)
-      "TODO ripgrep"
       ;; ("rgg"  "ripgrep"                counsel-rg)
       ("rg"  "ripgrep w/ dir"          amd/counsel-rg-with-initial-directory)
-      ("pa" "search ag counsel"        counsel-ag)
-      ("pf" "search ag filename regex" amd/counsel-ag-with-filename-regex)
+      ;; ("pa" "search ag counsel"        counsel-ag)
+      ;; ("pf" "search ag filename regex" amd/counsel-ag-with-filename-regex)
       ;; TODO
       ;; ("pt" "search pt counsel"        counsel-pt)
       ;; ("pp" "search pt project"        projectile-pt)
