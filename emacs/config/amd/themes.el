@@ -21,7 +21,6 @@
 (use-package doom-modeline
   :custom
   (doom-modeline-bar-width 8) ;; fringe width/2
-  (setq doom-modeline-unicode-fallback t) ;; use unicode / emoji
   ;; TODO: force height to be (frame-char-height)
   ;;   This seems to always multiply
   ;;   (if doom-modeline-icon 1.68 1.25) by the (frame-char-height)
@@ -30,13 +29,14 @@
   :hook
   (after-init . doom-modeline-mode)
   :config
-  (if (display-graphic-p)
-      ;; use nerd-icons in gui mode
-      (setq doom-modeline-icon t)
-    ;; no icons in terminal mode
-    (setq doom-modeline-icon nil
-          ;; use unicode / emoji as fallback
-          doom-modeline-unicode-fallback nil))
+  ;; (when (display-graphic-p)
+  ;;     ;; use nerd-icons in gui mode
+  ;;     (setq doom-modeline-icon t))
+
+  (setq
+   doom-modeline-icon nil
+   ;; use unicode / emoji as fallback
+   doom-modeline-unicode-fallback nil)
 
   (unless doom-modeline-icon
     ;; use reverse video for evil state for higher contrast
@@ -54,8 +54,7 @@
      '(doom-modeline-evil-visual-state
        ((t (:inherit doom-modeline-warning :inverse-video t))) t)
      '(doom-modeline-evil-replace-state
-       ((t (:inherit doom-modeline-urgent :inverse-video t))) t)))
-  )
+       ((t (:inherit doom-modeline-urgent :inverse-video t))) t))))
 
 ;;;; airline-themes
 

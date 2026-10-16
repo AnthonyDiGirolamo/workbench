@@ -156,13 +156,14 @@
   ;; (add-hook 'evil-local-mode-hook 'turn-on-undo-tree-mode)
   (evil-mode 1)
 
-  (setopt evil-emacs-state-tag " EMACS ")
-  (setopt evil-normal-state-tag " NORMAL ")
-  (setopt evil-motion-state-tag " MOTION ")
-  (setopt evil-insert-state-tag " INSERT ")
-  (setopt evil-visual-state-tag " VISUAL ")
-  (setopt evil-replace-state-tag " REPLACE ")
-  (setopt evil-operator-state-tag " OPERATOR ")
+  (setopt
+   evil-emacs-state-tag " EMACS "
+   evil-normal-state-tag " NORMAL "
+   evil-motion-state-tag " MOTION "
+   evil-insert-state-tag " INSERT "
+   evil-visual-state-tag " VISUAL "
+   evil-replace-state-tag " REPLACE "
+   evil-operator-state-tag " OPERATOR ")
 
   ;; (defun amd/get-inner-symbol ()
   ;;   (interactive)
@@ -266,21 +267,21 @@
 ;;   :config
 ;;   (global-evil-visualstar-mode 1))
 
-;; (use-package evil-surround
-;;   :after evil
-;;   :config
-;;   (global-evil-surround-mode 1)
-;;   (add-hook
-;;    'web-mode-hook
-;;    (lambda ()
-;;      (add-to-list 'evil-surround-pairs-alist '(?h . ("{{ " . " }}"))  )
-;;      (add-to-list 'evil-surround-pairs-alist '(?= . ("<%= " . " %>")) )
-;;      (add-to-list 'evil-surround-pairs-alist '(?- . ("<% "  . " %>")) ))))
+(use-package evil-surround
+  :after evil
+  :config
+  (global-evil-surround-mode 1)
+  (add-hook
+   'web-mode-hook
+   (lambda ()
+     (add-to-list 'evil-surround-pairs-alist '(?h . ("{{ " . " }}"))  )
+     (add-to-list 'evil-surround-pairs-alist '(?= . ("<%= " . " %>")) )
+     (add-to-list 'evil-surround-pairs-alist '(?- . ("<% "  . " %>")) ))))
 
-;; (use-package evil-matchit
-;;   :after evil
-;;   :config
-;;   (global-evil-matchit-mode 1))
+(use-package evil-matchit
+  :after evil
+  :config
+  (global-evil-matchit-mode 1))
 
 (use-package evil-commentary
   :after evil
@@ -300,11 +301,11 @@
 ;; useful find-replaces
 ;; s/\([^ \n]\)  */\1 /g
 
-;; (use-package expand-region
-;;   :after evil
-;;   :general
-;;   (:states '(normal)
-;;     "ge" 'er/expand-region))
+(use-package expand-region
+  :after evil
+  :general
+  (:states '(normal)
+    "ge" 'er/expand-region))
 
 (provide 'amd/evil)
 ;;; evil.el ends here

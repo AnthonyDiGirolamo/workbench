@@ -9,7 +9,8 @@
               color-identifiers-mode consult consult-eglot corfu
               counsel diminish dired-hacks-utils dired-subtree
               doom-modeline doom-themes embark embark-consult evil
-              evil-commentary fish-mode general gn-mode helpful
+              evil-commentary evil-matchit evil-surround expand-region
+              fish-mode general gn-mode helpful
               highlight-indent-guides hydra ibuffer-vc ivy magit
               marginalia orderless outli posframe powerline projectile
               rainbow-delimiters rust-mode shackle solaire-mode swiper
